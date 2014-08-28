@@ -31,7 +31,7 @@ public class StartRemoteApiServlet extends CustomJavaAction<Boolean>
 	public Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		Core.addRequestHandler("unittesting", new RemoteApiServlet(password));
+		Core.addRequestHandler("unittests/", new RemoteApiServlet(password));
 		return true;
 		// END USER CODE
 	}

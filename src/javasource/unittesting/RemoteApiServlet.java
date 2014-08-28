@@ -8,7 +8,12 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.auth.InvalidCredentialsException;
 import org.apache.commons.io.IOUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import unittesting.proxies.TestSuite;
+import unittesting.proxies.UnitTest;
+import unittesting.proxies.UnitTestResult;
 
 import com.mendix.core.Core;
 import com.mendix.core.CoreException;
@@ -17,6 +22,7 @@ import com.mendix.logging.ILogNode;
 import com.mendix.m2ee.api.IMxRuntimeRequest;
 import com.mendix.m2ee.api.IMxRuntimeResponse;
 import com.mendix.systemwideinterfaces.core.IContext;
+import communitycommons.XPath;
 
 public class RemoteApiServlet extends RequestHandler {
 
@@ -27,9 +33,8 @@ public class RemoteApiServlet extends RequestHandler {
 	private final String password;
 	private boolean detectedUnitTests = false;
 	
-	private volatile boolean isRunning = false;
-	
-	private final ILogNode LOG = TestManager.LOG;
+	private final static ILogNode LOG = TestManager.LOG;
+	private volatile TestSuiteRunner testSuiteRunner;
 	
 	public RemoteApiServlet(String password) {
 		this.password = password;
@@ -43,7 +48,7 @@ public class RemoteApiServlet extends RequestHandler {
 		HttpServletResponse response = resp.getHttpServletResponse();
 		
 		try {
-			if (!"GET".equals(request.getMethod()))
+			if (!"POST".equals(request.getMethod()))
 				response.setStatus(HttpStatus.SC_METHOD_NOT_ALLOWED);
 			else if (COMMAND_START.equals(path))
 				serveRunStart(request, response, path);
@@ -54,20 +59,35 @@ public class RemoteApiServlet extends RequestHandler {
 		}
 		catch (IllegalArgumentException e) {
 			response.setStatus(HttpStatus.SC_BAD_REQUEST);
-			response.getWriter().write(e.getMessage());
+			write(response, e.getMessage());
 		}
 		catch (InvalidCredentialsException e) {
 			response.setStatus(HttpStatus.SC_UNAUTHORIZED);
-			response.getWriter().write("Invalid password provided");
+			write(response, "Invalid password provided");
 		}
+	}
+
+	private void write(HttpServletResponse response, String data) {
+		try {
+			response.getOutputStream().write(data.getBytes("UTF-8"));
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+		
 	}
 
 	private synchronized void serveRunStatus(HttpServletRequest request,
 			HttpServletResponse response, String path) throws Exception {
 		JSONObject input = parseInput(request);
 		verifyPassword(input);
-		// TODO Auto-generated method stub
 		
+		if (testSuiteRunner == null) {
+			throw new IllegalArgumentException("No testrun was started yet");
+		}
+		
+		response.setStatus(HttpStatus.SC_OK);
+		response.setHeader("Content-Type", "application/json");
+		write(response, testSuiteRunner.getStatus().toString(4));
 	}
 
 	private synchronized void serveRunStart(HttpServletRequest request,
@@ -81,22 +101,36 @@ public class RemoteApiServlet extends RequestHandler {
 			detectedUnitTests = true;
 		}
 		
-		if (isRunning) {
+		if (testSuiteRunner != null && !testSuiteRunner.isFinished()) {
 			throw new IllegalArgumentException("Cannot start a test run while another test run is still running");
 		}
-		isRunning = true;			
 		
-		// TODO Auto-generated method stub
+		LOG.info("[remote api] starting new test run");
+		testSuiteRunner = new TestSuiteRunner();
+		
+		Thread t = new Thread() {
+			@Override
+			public void run() {
+				testSuiteRunner.run();
+			}
+		};
+		
+		t.start();
+		response.setStatus(HttpStatus.SC_NO_CONTENT);		
 	}
 		
 	
 
 	private void verifyPassword(JSONObject input) throws InvalidCredentialsException {
-		if (!input.has(PARAM_PASSWORD))
+		if (!input.has(PARAM_PASSWORD)) {
+			LOG.warn("[remote api] Missing password");
 			throw new IllegalArgumentException("No '" + PARAM_PASSWORD + "' attribute found in the JSON body. Please provide a password");
+		}
 		
-		if (!password.equals(input.getString(PARAM_PASSWORD)))
+		if (!password.equals(input.getString(PARAM_PASSWORD))) {
+			LOG.warn("[remote api] Invalid password");
 			throw new InvalidCredentialsException();
+		}
 	}
 
 	private JSONObject parseInput(HttpServletRequest request) throws IOException {
@@ -104,5 +138,63 @@ public class RemoteApiServlet extends RequestHandler {
 		return new JSONObject(data);
 	}
 
+	private class TestSuiteRunner {
+		boolean finished = false;
+		long startTime = System.currentTimeMillis();
+		long totalTime = -1;
+		
+		public void run() {
+			try {
+				TestManager.instance().runTestSuites();
+			} catch (CoreException e) {
+				LOG.error("[remote api] error while running test suite: " + e.getMessage(), e);
+			} finally {
+				totalTime = System.currentTimeMillis() - startTime;
+				finished = true;
+				LOG.info("[remote api] finished test run");
+			}			
+		}
+		
+		public synchronized boolean isFinished() {
+			return finished;
+		}
+
+		public synchronized JSONObject getStatus() throws CoreException {
+			JSONObject result = new JSONObject();
+			result.put("completed", this.finished);
+			result.put("runtime", totalTime);
+			
+			IContext context = Core.createSystemContext();
+			long count = 0l;
+			long failures = 0l;
+			
+			for(TestSuite suite : XPath.create(context, TestSuite.class).all()) {
+				count += suite.getTestCount();
+				failures += suite.getTestFailedCount();
+			}
+			
+			result.put("tests", count);
+			result.put("failures", failures);
+			
+			JSONArray failedTests = new JSONArray();
+			result.put("failed_tests", failedTests);
+			
+			for(UnitTest test : XPath.create(context, UnitTest.class)
+					//failed tests
+					.eq(UnitTest.MemberNames.Result, UnitTestResult._2_Failed)
+					//in testsuites which are not running anymore
+					.eq(UnitTest.MemberNames.UnitTest_TestSuite, TestSuite.entityName, TestSuite.MemberNames.Result, UnitTestResult._2_Failed)
+					.all()) 
+			{
+				JSONObject i = new JSONObject();
+				i.put("name", test.getName());
+				i.put("error", test.getResultMessage());
+				i.put("step", test.getLastStep());
+				failedTests.put(i);
+			}
+			
+			return result;
+		}	
+	}
 
 }

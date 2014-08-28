@@ -14,7 +14,9 @@ Module to run Mendix and JUnit unit test inside a project.
 - Download the latest Community Commons module in your project
 - Map the module role 'TestRunner' to the applicable user roles in your application
 - Add the 'UnitTestOverview' microflow to your navigation structure
-- Add the 'Startup' flow to your models startup sequence
+- [Optional for remote unit test run API] Add the 'Startup' flow to your models startup sequence
+- [Optional for remote unit test run API] Set the constants `UnitTesting.RemoteApiEnabled` to `true` and provide a password to `UnitTesting.RemoteApiPassword`
+- [Optional for remote unit test run API] When hosting in a cloud node or on premise; open a request handler on the `unittests/` path
 
 ## Usage 
 
@@ -46,3 +48,41 @@ The Java unit test runner is driven by junit.org and requires general understand
 See the files `src/javasource/unittesting/UnittestingUnitTest1.java` and `src/javasource/unittesting/UnittestingUnitTest2.java` for some example JUnit unit tests. 
 
 The AbstractUnitTest class can be used to base unit test classes on. This class provides some time measurement functions (to ignore setup / teardown  in the time measure) and the reportStep function. (Which is otherwise accessible through TestManager.instance().reportStep). 
+
+## Running unit tests through the remote api
+
+Running unit tests through the remote json REST api is pretty trivial. A new test run can be kicked off (if none is running yet) by using the endpoint `unittests/start`. Example:
+
+```json
+POST http://localhost:8080/unittests/start
+{
+	"password" : "1"
+}
+```
+
+This request will be responded to with a `204 NO CONTENT` response if the test run was started successfully. From that point on, one can pull for the status of the test run by invoking `unittests/status`. Example:
+
+```json
+POST http://localhost:8080/unittests/status
+
+{
+	"password" : "1"
+}
+```
+
+Example response:
+```json
+{
+    "failures": 1,
+    "tests": 10,
+    "runtime": -1,
+    "failed_tests": [{
+        "error": "This exception is doopery nice",
+        "name": "MyFirstModule.Test_ThisTestIsSupposedToFailToCheckExceptionRendering",
+        "step": "Starting microflow test 'MyFirstModule.Test_ThisTestIsSupposedToFailToCheckExceptionRendering'"
+    }],
+    "completed": false
+}
+```
+
+Please note that the `completed` flag will be false as long as the test run isn't finished. The `runtime` flag will return the total runtime of the suite in milliseconds after the test run has finished.
