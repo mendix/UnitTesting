@@ -8,8 +8,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -538,6 +540,27 @@ public class TestManager extends RunListener
 			LOG.warn("Cannot update laststep to '" + lastStep1 + "': No test is currently running..");
 	}
 
+	public synchronized void findAllTests(IContext context) throws CoreException {
+		/*
+		 * Find modules
+		 */
+		Set<String> modules = new HashSet<String>();
+		for(String name : Core.getMicroflowNames())
+			modules.add(name.split("\\.")[0]);
+		
+		/*
+		 * Update modules
+		 */
+		for(String module : modules) {
+			TestSuite testSuite = XPath.create(context, TestSuite.class).findOrCreate(TestSuite.MemberNames.Module, module);
+			updateUnitTestList(testSuite, context);
+		}
+		
+		/*
+		 * Remove all modules without tests
+		 */
+		XPath.create(context, TestSuite.class).not().hasReference(UnitTest.MemberNames.UnitTest_TestSuite, UnitTest.entityName).close().deleteAll();
+	}
 
 	public synchronized void updateUnitTestList(TestSuite testSuite, IContext context1)
 	{
@@ -582,6 +605,12 @@ public class TestManager extends RunListener
 					.all()) {
 				test.delete();
 			}
+			
+			/*
+			 * Update count
+			 */
+			testSuite.setTestCount(XPath.create(context1, UnitTest.class).eq(UnitTest.MemberNames.UnitTest_TestSuite, testSuite).count());
+			testSuite.commit();
 			
 		}
 		catch(Exception e) {
