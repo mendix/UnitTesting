@@ -26,6 +26,9 @@ public class RemoteApiServlet extends RequestHandler {
 	
 	private final String password;
 	private boolean detectedUnitTests = false;
+	
+	private volatile boolean isRunning = false;
+	
 	private final ILogNode LOG = TestManager.LOG;
 	
 	public RemoteApiServlet(String password) {
@@ -59,7 +62,7 @@ public class RemoteApiServlet extends RequestHandler {
 		}
 	}
 
-	private void serveRunStatus(HttpServletRequest request,
+	private synchronized void serveRunStatus(HttpServletRequest request,
 			HttpServletResponse response, String path) throws Exception {
 		JSONObject input = parseInput(request);
 		verifyPassword(input);
@@ -77,6 +80,11 @@ public class RemoteApiServlet extends RequestHandler {
 			TestManager.instance().findAllTests(context);
 			detectedUnitTests = true;
 		}
+		
+		if (isRunning) {
+			throw new IllegalArgumentException("Cannot start a test run while another test run is still running");
+		}
+		isRunning = true;			
 		
 		// TODO Auto-generated method stub
 	}
