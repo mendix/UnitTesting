@@ -1,9 +1,7 @@
 package unittesting;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -13,14 +11,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runner.JUnitCore;
-import org.junit.runner.Result;
-import org.junit.runner.notification.Failure;
-import org.junit.runner.notification.RunListener;
 import org.junit.runners.JUnit4;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
@@ -34,15 +28,13 @@ import com.mendix.core.CoreException;
 import com.mendix.logging.ILogNode;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.systemwideinterfaces.core.IDataType;
-import com.mendix.systemwideinterfaces.core.IFeedback.MessageType;
-import com.mendix.webui.CustomJavaAction;
 import communitycommons.XPath;
 
 /**
  * @author mwe
  *
  */
-public class TestManager extends RunListener
+public class TestManager
 {
 	/** Test manager introduces its own exception, because the AssertionExceptions from JUnit are not picked up properly by
 	 * the runtime in 4.1.1 and escape all exception handling defined inside microflows :-S
@@ -62,14 +54,18 @@ public class TestManager extends RunListener
 
 	private static final String	TEST_MICROFLOW_PREFIX_1	= "Test";
 	private static final String	TEST_MICROFLOW_PREFIX_2	= "UT_";
-	private static final String	CLOUD_SECURITY_ERROR	= "Failed to find JUnit test classes or methods. Note that java unit tests cannot be run with default cloud security. \n\n";
+
+	static final String	CLOUD_SECURITY_ERROR	= "Failed to find JUnit test classes or methods. Note that java unit tests cannot be run with default cloud security. \n\n";
+	
 	private static TestManager	instance;
 	public static ILogNode LOG = Core.getLogger("UnitTestRunner");
-	private TestSuite	currentTestRun;
-	private Map<String, Class<?>[]>	classCache = new HashMap<String, Class<?>[]>();
+	
 	private static final Map<String, Object> emptyArguments = new HashMap<String, Object>();
-	private IContext context = null;
+	private static final Map<String, Class<?>[]> classCache = new HashMap<String, Class<?>[]>();
+
 	private String	lastStep;
+	
+	
 
 	public static TestManager instance()
 	{
@@ -79,8 +75,8 @@ public class TestManager extends RunListener
 	}
 
 
-	private Class<?>[] getUnitTestClasses(TestSuite testRun) {
-		if (false || !classCache.containsKey(testRun.getModule().toLowerCase())) {
+	private static Class<?>[] getUnitTestClasses(TestSuite testRun) {
+		if (!classCache.containsKey(testRun.getModule().toLowerCase())) {
 
 			ArrayList<Class<?>> classlist = getClassesForPackage(testRun.getModule());
 			Class<?>[] clazzez =  classlist.toArray(new Class<?>[classlist.size()]);
@@ -91,21 +87,20 @@ public class TestManager extends RunListener
 	}
 
 
-	public synchronized void runTest(UnitTest unitTest, IContext iContext, CustomJavaAction<?> action) throws ClassNotFoundException, CoreException
+	public synchronized void runTest(IContext context, UnitTest unitTest) throws ClassNotFoundException, CoreException
 	{
-		this.currentTestRun = unitTest.getUnitTest_TestSuite();
-		this.context = iContext;
+		TestSuite testSuite = unitTest.getUnitTest_TestSuite();
 		
 		/**
 		 * Is Mf
 		 */
 		if (unitTest.getIsMf()) {
 			try {
-				runMfSetup(action);
+				runMfSetup(testSuite);
 				runMicroflowTest(unitTest.getName(), unitTest);
 			}
 			finally {
-				runMfTearDown(action);
+				runMfTearDown(testSuite);
 			}
 		}
 
@@ -117,53 +112,78 @@ public class TestManager extends RunListener
 			Class<?> test = Class.forName(unitTest.getName().split("/")[0]);
 
 			JUnitCore junit = new JUnitCore();
-			junit.addListener(this);
+			junit.addListener(new UnitTestRunListener(context, testSuite));
 
 			junit.run(test);
 		}
 	}
 
-	private void runMfSetup(CustomJavaAction<?> action)  
+	private void runMfSetup(TestSuite testSuite)  
 	{
-		if (Core.getMicroflowNames().contains(currentTestRun.getModule() + ".Setup")) {
+		if (Core.getMicroflowNames().contains(testSuite.getModule() + ".Setup")) {
 			try {
 				LOG.info("Running Setup microflow..");
-				Core.execute(Core.createSystemContext(), currentTestRun.getModule() + ".Setup", emptyArguments);
+				Core.execute(Core.createSystemContext(), testSuite.getModule() + ".Setup", emptyArguments);
 			}
 			catch(Exception e) {
 				LOG.error("Exception during SetUp microflow: " + e.getMessage(), e);
-				if (action != null)
-					action.addTextMessageFeedback(MessageType.WARNING, "Failed to start unit test. SetUp microflow threw an exception: " + e.getMessage(), true);
-				else 
-					throw new RuntimeException(e);
+				throw new RuntimeException(e);
 			}
 		}
 	}
 
-	private void runMfTearDown(CustomJavaAction<?> action) 
+	private void runMfTearDown(TestSuite testSuite) 
 	{
-		if (Core.getMicroflowNames().contains(currentTestRun.getModule() + ".TearDown")) {
+		if (Core.getMicroflowNames().contains(testSuite.getModule() + ".TearDown")) {
 			try
 			{
 				LOG.info("Running TearDown microflow..");
-				Core.execute(Core.createSystemContext(), currentTestRun.getModule() + ".TearDown", emptyArguments);
+				Core.execute(Core.createSystemContext(), testSuite.getModule() + ".TearDown", emptyArguments);
 			}
 			catch (Exception e)
 			{
-				LOG.error("Severe: exception in unittest TearDown microflow '" + currentTestRun.getModule() + ".Setup': " +e.getMessage(), e);
-				if (action != null)
-					action.addTextMessageFeedback(MessageType.WARNING, "Failed to start unit test. TearDown microflow threw an exception: " + e.getMessage(), true);
-				else 
-					throw new RuntimeException(e);
+				LOG.error("Severe: exception in unittest TearDown microflow '" + testSuite.getModule() + ".Setup': " +e.getMessage(), e);
+				throw new RuntimeException(e);
 			}
 		}
 	}
+	
+	public synchronized void runTestSuites() throws CoreException {
+		LOG.info("Starting testrun on all suites");
+		
+		//Context without transaction!
+		IContext context = Core.createSystemContext();
+		
+		for(TestSuite suite : XPath.create(context, TestSuite.class).all()) {
+			suite.setResult(null);
+			suite.commit();
+		}
 
-	public synchronized boolean runAllTests(TestSuite testRun, IContext iContext, CustomJavaAction<?> action) throws CoreException
+		for(TestSuite suite : XPath.create(context, TestSuite.class).all()) {
+			runTestSuite(context, suite);
+		}
+
+		LOG.info("Finished testrun on all suites");
+	}
+
+	public synchronized boolean runTestSuite(IContext context, TestSuite testSuite) throws CoreException
 	{
-		LOG.info("Starting testrun on " + testRun.getModule());
-		context = iContext;
+		LOG.info("Starting testrun on " + testSuite.getModule());
 
+		/**
+		 * Reset state
+		 */
+		testSuite.setLastRun(new Date());
+		testSuite.setLastRunTime(0L);
+		testSuite.setTestFailedCount(0L);
+		testSuite.setResult(UnitTestResult._1_Running);
+		testSuite.commit();
+		
+		for(UnitTest test : XPath.create(context, UnitTest.class).eq(UnitTest.MemberNames.UnitTest_TestSuite, testSuite).all()) {
+			test.setResult(null);
+			test.commit();
+		}
+		
 		long start = System.currentTimeMillis();
 
 		/**
@@ -171,17 +191,15 @@ public class TestManager extends RunListener
 		 */
 		Class<?>[] clazzez = null;
 		try {
-			clazzez = getUnitTestClasses(testRun);
+			clazzez = getUnitTestClasses(testSuite);
 		}
 		catch(Exception e) {
 			LOG.error(CLOUD_SECURITY_ERROR + e.getMessage(), e);
 		}
 
-		this.currentTestRun = testRun;
-
 		if (clazzez != null && clazzez.length > 0) {
 			JUnitCore junit = new JUnitCore();
-			junit.addListener(this);
+			junit.addListener(new UnitTestRunListener(context, testSuite));
 
 			junit.run(clazzez);
 		}
@@ -192,29 +210,31 @@ public class TestManager extends RunListener
 		 */
 
 		try {
-			runMfSetup(action);
+			runMfSetup(testSuite);
 	
-			List<String> mfnames = findMicroflowUnitTests(testRun);
+			List<String> mfnames = findMicroflowUnitTests(testSuite);
 	
 			for (String mf : mfnames){
-				currentTestRun.setTestCount(currentTestRun.getTestCount() + 1);
-				if (!runMicroflowTest(mf, getUnitTest(mf, true)))
-					currentTestRun.setTestFailedCount(currentTestRun.getTestFailedCount() + 1);
+				if (!runMicroflowTest(mf, getUnitTest(context, testSuite, mf, true))) {
+					testSuite.setTestFailedCount(testSuite.getTestFailedCount() + 1);
+					testSuite.commit();
+				}
 			}
 	
 		}
 		finally {
-			runMfTearDown(action);
+			runMfTearDown(testSuite);
 		}
 		
 
 		/** 
 		 * Aggregate
 		 */
-		testRun.setLastRunTime((System.currentTimeMillis() - start) / 1000);
-		testRun.commit();
+		testSuite.setLastRunTime((System.currentTimeMillis() - start) / 1000);
+		testSuite.setResult(testSuite.getTestFailedCount() == 0L ? UnitTestResult._3_Success : UnitTestResult._2_Failed);
+		testSuite.commit();
 
-		LOG.info("Finished testrun on " + testRun.getModule());
+		LOG.info("Finished testrun on " + testSuite.getModule());
 		return true;
 	}
 
@@ -237,12 +257,13 @@ public class TestManager extends RunListener
 	}
 
 
-	private boolean runMicroflowTest(String mf, UnitTest test)
+	private boolean runMicroflowTest(String mf, UnitTest test) throws CoreException
 	{
 		/** 
 		 * Prepare...
 		 */
 		LOG.info("Starting unittest " + mf);
+		TestSuite testSuite = test.getUnitTest_TestSuite();
 
 		reportStep("Starting microflow test '" + mf + "'");
 		
@@ -267,7 +288,7 @@ public class TestManager extends RunListener
 		commitSilent(test);
 
 		IContext mfContext = Core.createSystemContext();
-		if (this.currentTestRun.getAutoRollbackMFs())
+		if (testSuite.getAutoRollbackMFs())
 			mfContext.startTransaction();
 
 		long start = System.currentTimeMillis();
@@ -293,7 +314,7 @@ public class TestManager extends RunListener
 			
 		}
 		finally {
-			if (this.currentTestRun.getAutoRollbackMFs())
+			if (testSuite.getAutoRollbackMFs())
 				mfContext.rollbackTransAction();
 				
 			test.setLastStep(lastStep);
@@ -316,16 +337,16 @@ public class TestManager extends RunListener
 		}
 	}
 
-	private UnitTest getUnitTest(Description description, boolean isMF) {
-		return getUnitTest(description.getClassName() + "/" + description.getMethodName(), isMF);
+	UnitTest getUnitTest(IContext context, TestSuite testSuite, Description description, boolean isMF) {
+		return getUnitTest(context, testSuite, description.getClassName() + "/" + description.getMethodName(), isMF);
 	}
 
-	private UnitTest getUnitTest(String name, boolean isMF) {
+	private UnitTest getUnitTest(IContext context, TestSuite testSuite, String name, boolean isMF) {
 		UnitTest res;
 		try
 		{
 			res = XPath.create(context, UnitTest.class)
-					.eq(UnitTest.MemberNames.UnitTest_TestSuite, currentTestRun)
+					.eq(UnitTest.MemberNames.UnitTest_TestSuite, testSuite)
 					.and()
 					.eq(UnitTest.MemberNames.Name, name)
 					.and()
@@ -340,125 +361,13 @@ public class TestManager extends RunListener
 		if (res == null) {
 			res = new UnitTest(context);
 			res.setName(name);
-			res.setUnitTest_TestSuite(currentTestRun);
+			res.setUnitTest_TestSuite(testSuite);
 			res.setIsMf(isMF);
 		}
 
 		return res;
 	}
 
-
-	/*** 
-	 * 
-	 * 
-	 * 
-	 * Junit run listener
-	 * 
-	 */
-
-
-	@Override
-	public void testRunStarted(Description description) throws java.lang.Exception {
-		LOG.info("Starting test run");
-	}
-
-	@Override
-	public void testRunFinished(Result result) throws java.lang.Exception {
-		LOG.info("Test run finished");
-	}
-
-	@Override
-	public void testStarted(Description description) throws java.lang.Exception {
-		String message = "Starting JUnit test " + description.getClassName() + "." + description.getMethodName();
-		LOG.info(message);
-		reportStep(message);
-		
-		UnitTest t = getUnitTest(description, false);
-		t.setResult(UnitTestResult._1_Running);
-		t.setResultMessage("");
-		t.setLastRun(new Date());
-		t.commit();
-	}
-
-	@Override
-	public void testFinished(Description description) throws Exception {
-		LOG.info("Finished test " + description.getClassName() + "." + description.getMethodName());
-
-		UnitTest t = getUnitTest(description, false);
-
-		currentTestRun.setTestCount(currentTestRun.getTestCount() + 1);
-
-		if (t.getResult() == UnitTestResult._1_Running) {
-			t.setResult(UnitTestResult._3_Success);
-
-			long delta = getUnitTestInnerTime(description, t);
-
-			t.setResultMessage("OK in " + (delta > 10000 ? Math.round(delta / 1000) + " s" : delta + " ms"));
-
-		}
-		
-		t.setLastStep(lastStep);
-		t.commit();
-	}
-
-
-	private long getUnitTestInnerTime(Description description, UnitTest t)
-			throws IllegalAccessException, IllegalArgumentException,
-			InvocationTargetException, NoSuchMethodException, SecurityException
-			{
-		long delta = System.currentTimeMillis() - t.getLastRun().getTime();
-
-		if (AbstractUnitTest.class.isAssignableFrom(description.getTestClass())) 
-			delta = (Long) description.getTestClass().getMethod("getTestRunTime").invoke(null);
-		return delta;
-			}
-
-
-	@Override
-	public void testFailure(Failure failure) throws java.lang.Exception {
-		boolean isCloudSecurityError = 
-				failure.getException() != null && 
-				failure.getException() instanceof AccessControlException &&
-				((AccessControlException) failure.getException()).getPermission().getName().equals("accessDeclaredMembers");
-				
-			
-		
-		UnitTest t = getUnitTest(failure.getDescription(), false);
-
-		/** 
-		 * Test itself failed
-		 */		
-		LOG.error("Failed test (at step '" + lastStep + "') " + failure.getDescription().getClassName() + "." + failure.getDescription().getMethodName() + " : " + failure.getMessage(), failure.getException());
-
-		currentTestRun.setTestFailedCount(currentTestRun.getTestFailedCount() + 1);
-
-		t.setResult(UnitTestResult._2_Failed);
-		t.setResultMessage(String.format("%s %s: %s\n\n:%s",
-				isCloudSecurityError ? "CLOUD SECURITY EXCEPTION \n\n" + CLOUD_SECURITY_ERROR : "FAILED",
-				findProperExceptionLine(failure.getTrace()),
-				failure.getMessage(),
-				failure.getTrace()
-				));
-		
-		t.setLastStep(lastStep);
-		t.setLastRun(new Date());
-		t.commit();
-	}
-
-	private String findProperExceptionLine(String trace)
-	{
-		String[] lines = StringUtils.split(trace,"\n");
-		if (lines.length > 2)
-			for(int i = 1; i < lines.length; i++) {
-				String line = lines[i].trim();
-				if (!line.startsWith("at org.junit") && line.contains("(")) 
-					return " at " + line.substring(line.indexOf('(') + 1, line.indexOf(')')).replace(":"," line ");
-			}
-		
-		return "";
-	}
-
-	
 
 	/**
 	 * 
@@ -469,16 +378,16 @@ public class TestManager extends RunListener
 	 * 
 	 */
 
-	private Class<?> loadClass(String className) {
+	private static Class<?> loadClass(String className) {
 		try {
-			return this.getClass().getClassLoader().loadClass(className);
+			return TestManager.instance().getClass().getClassLoader().loadClass(className);
 		} 
 		catch (ClassNotFoundException e) {
 			throw new RuntimeException("Unexpected ClassNotFoundException loading class '" + className + "'");
 		}
 	}
 
-	private void processDirectory(File directory, String pkgname, ArrayList<Class<?>> classes) {
+	private static void processDirectory(File directory, String pkgname, ArrayList<Class<?>> classes) {
 		// Get the list of the files contained in the package
 		String[] files = directory.list();
 		if (files != null) 
@@ -502,7 +411,7 @@ public class TestManager extends RunListener
 			}
 	}
 
-	private boolean isProperUnitTest(Class<?> clazz)
+	private static boolean isProperUnitTest(Class<?> clazz)
 	{
 		for (Method m : clazz.getMethods()) 
 			if (m.getAnnotation(org.junit.Test.class) != null)
@@ -513,7 +422,7 @@ public class TestManager extends RunListener
 	}
 
 
-	public ArrayList<Class<?>> getClassesForPackage(String path /*Package pkg*/) {
+	public static ArrayList<Class<?>> getClassesForPackage(String path /*Package pkg*/) {
 		ArrayList<Class<?>> classes = new ArrayList<Class<?>>();
 
 		//String pkgname = pkg.getName();
@@ -532,12 +441,8 @@ public class TestManager extends RunListener
 
 	public void reportStep(String lastStep1)
 	{
-		if (currentTestRun != null) {
-			lastStep = lastStep1;
-			LOG.debug("UnitTest reportStep: '" + lastStep1 + "'");
-		}
-		else
-			LOG.warn("Cannot update laststep to '" + lastStep1 + "': No test is currently running..");
+		lastStep = lastStep1;
+		LOG.debug("UnitTest reportStep: '" + lastStep1 + "'");
 	}
 
 	public synchronized void findAllTests(IContext context) throws CoreException {
@@ -553,7 +458,7 @@ public class TestManager extends RunListener
 		 */
 		for(String module : modules) {
 			TestSuite testSuite = XPath.create(context, TestSuite.class).findOrCreate(TestSuite.MemberNames.Module, module);
-			updateUnitTestList(testSuite, context);
+			updateUnitTestList(context, testSuite);
 		}
 		
 		/*
@@ -562,10 +467,8 @@ public class TestManager extends RunListener
 		XPath.create(context, TestSuite.class).not().hasReference(UnitTest.MemberNames.UnitTest_TestSuite, UnitTest.entityName).close().deleteAll();
 	}
 
-	public synchronized void updateUnitTestList(TestSuite testSuite, IContext context1)
+	public synchronized void updateUnitTestList(IContext context, TestSuite testSuite)
 	{
-		this.context = context1; 
-		
 		try {
 			/*
 			 * Mark all dirty
@@ -581,7 +484,7 @@ public class TestManager extends RunListener
 			 * Find microflow tests
 			 */
 			for (String mf : findMicroflowUnitTests(testSuite)) { 
-				UnitTest test = getUnitTest(mf, true);
+				UnitTest test = getUnitTest(context, testSuite, mf, true);
 				test.set_dirty(false);
 				test.setUnitTest_TestSuite(testSuite);
 				test.commit();
@@ -591,7 +494,7 @@ public class TestManager extends RunListener
 			 * Find Junit tests
 			 */
 			for (String jtest : findJUnitTests(testSuite)) { 
-				UnitTest test = getUnitTest(jtest, false);
+				UnitTest test = getUnitTest(context, testSuite, jtest, false);
 				test.set_dirty(false);
 				test.setUnitTest_TestSuite(testSuite);
 				test.commit();
@@ -609,7 +512,7 @@ public class TestManager extends RunListener
 			/*
 			 * Update count
 			 */
-			testSuite.setTestCount(XPath.create(context1, UnitTest.class).eq(UnitTest.MemberNames.UnitTest_TestSuite, testSuite).count());
+			testSuite.setTestCount(XPath.create(context, UnitTest.class).eq(UnitTest.MemberNames.UnitTest_TestSuite, testSuite).count());
 			testSuite.commit();
 			
 		}
@@ -653,4 +556,13 @@ public class TestManager extends RunListener
 		}
 		return junitTests;
 	}
+
+
+	public String getLastReportedStep() {
+		//MWE: this system is problematic weird if used from multiple simultanously used threads..
+		return lastStep;
+	}
+
+
+	
 }

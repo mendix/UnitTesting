@@ -10,32 +10,25 @@
 package unittesting.actions;
 
 import unittesting.TestManager;
-import com.mendix.systemwideinterfaces.core.IMendixObject;
-import com.mendix.systemwideinterfaces.core.UserAction;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.webui.CustomJavaAction;
 
 /**
  * 
  */
-public class RunAllUnitTests extends CustomJavaAction<Boolean>
+public class StartRunAllSuites extends CustomJavaAction<Boolean>
 {
-	private IMendixObject __testRun;
-	private unittesting.proxies.TestSuite testRun;
-
-	public RunAllUnitTests(IContext context, IMendixObject testRun)
+	public StartRunAllSuites(IContext context)
 	{
 		super(context);
-		this.__testRun = testRun;
 	}
 
 	@Override
 	public Boolean executeAction() throws Exception
 	{
-		this.testRun = __testRun == null ? null : unittesting.proxies.TestSuite.initialize(getContext(), __testRun);
-
 		// BEGIN USER CODE
-		return TestManager.instance().runAllTests(testRun, getContext(), null); //this action is not picked up by the client so do not sent it along
+		TestManager.instance().runTestSuites();
+		return true;
 		// END USER CODE
 	}
 
@@ -45,7 +38,7 @@ public class RunAllUnitTests extends CustomJavaAction<Boolean>
 	@Override
 	public String toString()
 	{
-		return "RunAllUnitTests";
+		return "StartRunAllSuites";
 	}
 
 	// BEGIN EXTRA CODE

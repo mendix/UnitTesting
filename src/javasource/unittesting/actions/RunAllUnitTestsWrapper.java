@@ -11,7 +11,6 @@ package unittesting.actions;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import unittesting.TestManager;
-import com.google.common.collect.ImmutableMap;
 import com.mendix.core.Core;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.systemwideinterfaces.core.IFeedback.MessageType;
@@ -39,7 +38,8 @@ public class RunAllUnitTestsWrapper extends CustomJavaAction<Boolean>
 
 		// BEGIN USER CODE
 		try {
-			Core.execute(Core.createSystemContext(), "UnitTesting.StartUnittestRunInner", false, ImmutableMap.of("TestRun", (Object) testRun.getMendixObject()));
+			//Run tests in a new context without transaction!
+			TestManager.instance().runTestSuite(Core.createSystemContext(), testRun);
 		}
 		catch(Exception e) {
 			TestManager.LOG.error("An error occurred while trying to run the unit tests: " + ExceptionUtils.getRootCauseMessage(e), e);

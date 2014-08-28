@@ -10,9 +10,8 @@
 package unittesting.actions;
 
 import unittesting.TestManager;
-import com.mendix.systemwideinterfaces.core.IMendixObject;
-import com.mendix.systemwideinterfaces.core.UserAction;
 import com.mendix.systemwideinterfaces.core.IContext;
+import com.mendix.systemwideinterfaces.core.IMendixObject;
 import com.mendix.webui.CustomJavaAction;
 
 /**
@@ -35,7 +34,7 @@ public class RunUnitTest extends CustomJavaAction<Boolean>
 		this.unitTest = __unitTest == null ? null : unittesting.proxies.UnitTest.initialize(getContext(), __unitTest);
 
 		// BEGIN USER CODE
-		TestManager.instance().runTest(unitTest, getContext(), this);
+		TestManager.instance().runTest(getContext(), unitTest);
 		return true;
 		// END USER CODE
 	}

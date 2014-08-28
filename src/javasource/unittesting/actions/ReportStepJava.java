@@ -10,7 +10,6 @@
 package unittesting.actions;
 
 import unittesting.TestManager;
-import com.mendix.systemwideinterfaces.core.UserAction;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.webui.CustomJavaAction;
 
