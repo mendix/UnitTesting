@@ -14,6 +14,7 @@ Module to run Mendix and JUnit unit test inside a project.
 - Download the latest Community Commons module in your project
 - Map the module role 'TestRunner' to the applicable user roles in your application
 - Add the 'UnitTestOverview' microflow to your navigation structure
+- Add the 'Startup' flow to your models startup sequence
 
 ## Usage 
 
