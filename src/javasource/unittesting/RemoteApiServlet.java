@@ -2,12 +2,12 @@ package unittesting;
 
 import java.io.IOException;
 
+import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.auth.InvalidCredentialsException;
-import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -22,6 +22,7 @@ import com.mendix.logging.ILogNode;
 import com.mendix.m2ee.api.IMxRuntimeRequest;
 import com.mendix.m2ee.api.IMxRuntimeResponse;
 import com.mendix.systemwideinterfaces.core.IContext;
+
 import communitycommons.XPath;
 
 public class RemoteApiServlet extends RequestHandler {
@@ -134,8 +135,18 @@ public class RemoteApiServlet extends RequestHandler {
 	}
 
 	private JSONObject parseInput(HttpServletRequest request) throws IOException {
-		String data = IOUtils.toString(request.getInputStream());
-		return new JSONObject(data);
+		final ServletInputStream is = request.getInputStream();
+
+		final StringBuilder sb = new StringBuilder();
+
+		int next = is.read();
+		while (next != -1) {
+			final char c = (char) next;
+			sb.append(c);
+			next = is.read();
+		}
+
+		return new JSONObject(sb.toString());
 	}
 
 	private class TestSuiteRunner {
