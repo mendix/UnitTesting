@@ -110,12 +110,17 @@ public class XPath<T>
 	}
 	
 	public XPath<T> offset(int offset2) {
+		if (offset2 < 0)
+			throw new IllegalArgumentException("Offset should not be negative");
 		this.offset  = offset2;
 		return this;
 	}
 	
 	public XPath<T> limit(int limit2) {
-		this.limit  = limit2;
+		if (limit2 < -1 || limit2 == 0)
+			throw new IllegalArgumentException("Limit should be larger than zero or -1. ");
+
+		this.limit = limit2;
 		return this;
 	}
 	
@@ -145,7 +150,7 @@ public class XPath<T>
 			subconstraint()
 			.contains(attr, value)
 			.and()
-			.append(" length(" + attr + ") = ").append(valueToXPathValue(value))
+			.append(" length(" + attr + ") = ").append(value == null ? "0" : valueToXPathValue(value.length()))	
 			.close();
 	}
 	
@@ -239,7 +244,7 @@ public class XPath<T>
 			throw new IllegalArgumentException("Expected an even number of xpath path parts");
 	}
 	
-	private XPath<T> append(String s) {
+	public XPath<T> append(String s) {
 		builder.append(s);
 		return this;
 	}
@@ -288,24 +293,47 @@ public class XPath<T>
 	 */
 	public T findOrCreateNoCommit(Object... keysAndValues) throws CoreException
 	{
-		T res = findOrCreateHelper(keysAndValues);
+		T res = findFirst(keysAndValues);
 		
 		return res != null ? res : constructInstance(false, keysAndValues);
 	}
 
 	
 	public T findOrCreate(Object... keysAndValues) throws CoreException {
-		T res = findOrCreateHelper(keysAndValues);
-		
+		T res = findFirst(keysAndValues);
+
 		return res != null ? res : constructInstance(true, keysAndValues);
 
 	}
 	
-	private T findOrCreateHelper(Object... keysAndValues)
+	public T findOrCreateSynchronized(Object... keysAndValues) throws CoreException, InterruptedException {
+		T res = findFirst(keysAndValues);
+		
+		if (res != null) {
+			return res;
+		} else {
+			synchronized (Core.getMetaObject(entity)) {
+				IContext synchronizedContext = context.getSession().createContext().getSudoContext();
+				try {
+					synchronizedContext.startTransaction();
+					res = createProxy(synchronizedContext, proxyClass, XPath.create(synchronizedContext, entity).findOrCreate(keysAndValues));
+					synchronizedContext.endTransaction();
+					return res;
+				} catch (CoreException e) {
+					if (synchronizedContext.isInTransaction()) {
+						synchronizedContext.rollbackTransAction();
+					}
+					throw e;
+				}
+			}
+		}
+	}	
+	
+	public T findFirst(Object... keysAndValues)
 			throws IllegalStateException, CoreException
 	{
 		if (builder.length() > 0)
-			throw new IllegalStateException("Find or create can only be used on XPath which do not have constraints already");
+			throw new IllegalStateException("FindFirst can only be used on XPath which do not have constraints already");
 		
 		assertEven(keysAndValues);
 		for(int i = 0; i < keysAndValues.length; i+= 2)
@@ -325,7 +353,7 @@ public class XPath<T>
 	public T constructInstance(boolean autoCommit, Object... keysAndValues) throws CoreException
 	{
 		assertEven(keysAndValues);
-		IMendixObject newObj = Core.create(context, this.entity);
+		IMendixObject newObj = Core.instantiate(context, this.entity);
 		
 		for(int i = 0; i < keysAndValues.length; i+= 2)
 			newObj.setValue(context, String.valueOf(keysAndValues[i]), toMemberValue(keysAndValues[i + 1]));
@@ -369,7 +397,7 @@ public class XPath<T>
 			//No longer available
 			removed.add(createProxy(context, this.proxyClass, existingItem));
 			if (autoDelete) 
-				Core.remove(context, existingItem);
+				Core.delete(context, existingItem);
 		}
 		
 		//Some items where not found in the database
@@ -510,7 +538,7 @@ public class XPath<T>
 
 		//Complex objects
 		if (value instanceof IMendixIdentifier)
-			return "'" + String.valueOf(((IMendixIdentifier) value).getGuid()) +  "'";
+			return "'" + String.valueOf(((IMendixIdentifier) value).toLong()) +  "'";
 		if (value instanceof IMendixObject)
 			return valueToXPathValue(((IMendixObject)value).getId());
 		if (value instanceof List<?>)
@@ -671,12 +699,24 @@ public class XPath<T>
 		
 		long count = this.count();
 		
-		this.offset(0);
-		this.limit(batchsize);
-		List<T> data = this.all();
+		int baseoffset = this.offset;
+		int baselimit = this.limit;
 		
-		while(data.size() > 0) {
-			long i = 0;
+		boolean useBaseLimit = baselimit > -1;
+		
+		this.offset(baseoffset);
+		List<T> data;
+		
+		long i = 0;
+
+		do {
+			int newlimit = useBaseLimit ? Math.min(batchsize, baseoffset + baselimit - this.offset) : batchsize;
+			if (newlimit == 0)
+				break; //where done, no more data is needed
+			
+			this.limit(newlimit);
+			data = this.all();
+
 			for(T item : data) {
 				i += 1;
 				try
@@ -690,8 +730,7 @@ public class XPath<T>
 			}
 			
 			this.offset(this.offset + data.size());
-			data = this.all();
-		}
+		} while(data.size() > 0);
 	}
 	
 	/**
@@ -720,7 +759,6 @@ public class XPath<T>
 		final long count = this.count();
 
 		final XPath<T> self = this;
-		ConversationLog cl = new ConversationLog("Community_Commons");
 
 		int progress = 0;
 		List<Future<?>> futures = new ArrayList<Future<?>>(batchsize); //no need to synchronize
@@ -771,7 +809,7 @@ public class XPath<T>
 		this.limit(1000);
 		List<IMendixObject> objs = allMendixObjects();
 		while (!objs.isEmpty()) {
-			if (!Core.remove(context, objs.toArray(new IMendixObject[objs.size()]))) 
+			if (!Core.delete(context, objs.toArray(new IMendixObject[objs.size()]))) 
 				return false; //TODO: throw?
 			
 			objs = allMendixObjects();

@@ -9,11 +9,11 @@
 
 package communitycommons.actions;
 
-import com.google.common.collect.ImmutableList;
-import com.mendix.systemwideinterfaces.core.IMendixObject;
-import communitycommons.ORM;
 import com.mendix.systemwideinterfaces.core.IContext;
+import com.mendix.systemwideinterfaces.core.IMendixObject;
 import com.mendix.webui.CustomJavaAction;
+import com.mendix.webui.FeedbackHelper;
+import communitycommons.ORM;
 
 /**
  * Use this function to automatically encrypt attributes of an object during (for example) before commit.
@@ -47,8 +47,9 @@ public class encryptMemberIfChanged extends CustomJavaAction<Boolean>
 	public Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		if (refreshItem && item != null)
-			this.addRefreshObjectListFeedback(ImmutableList.of(item.getId()));
+		if (refreshItem && item != null) {
+		    FeedbackHelper.addRefreshObjectFeedback(this.getContext(), item.getId());
+		}
 		
 		return ORM.encryptMemberIfChanged(getContext(), item, attributeName, key);
 		// END USER CODE

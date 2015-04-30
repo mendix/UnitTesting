@@ -9,9 +9,9 @@
 
 package communitycommons.actions;
 
-import communitycommons.ORM;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.webui.CustomJavaAction;
+import com.mendix.webui.FeedbackHelper;
 
 /**
  * Refreshes a certain domain object type in the client. Useful to enforce a datagrid to refresh for example.
@@ -33,7 +33,7 @@ public class refreshClass extends CustomJavaAction<Boolean>
 	public Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		ORM.refreshClass(this, objectType);
+		FeedbackHelper.addRefreshClass(this.getContext(), objectType);
 		return true;
 		// END USER CODE
 	}

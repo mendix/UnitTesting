@@ -9,10 +9,9 @@
 
 package communitycommons.actions;
 
-import java.util.Date;
-import communitycommons.DateTime;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.webui.CustomJavaAction;
+import communitycommons.DateTime;
 
 /**
  * Converts a Unix timestamp to a dateTime object

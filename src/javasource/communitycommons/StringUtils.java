@@ -24,8 +24,7 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
 
-import org.apache.axiom.util.base64.Base64Utils;
-import org.apache.axis2.util.Base64;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringEscapeUtils;
@@ -36,10 +35,12 @@ import org.owasp.validator.html.Policy;
 
 import system.proxies.FileDocument;
 
+import com.google.common.base.Function;
 import com.mendix.core.Core;
 import com.mendix.systemwideinterfaces.MendixRuntimeException;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.systemwideinterfaces.core.IMendixObject;
+
 import communitycommons.proxies.XSSPolicy;
 
 public class StringUtils
@@ -86,28 +87,48 @@ public class StringUtils
 		return org.apache.commons.lang.RandomStringUtils.randomAlphanumeric(length);
 	}
 
-	public static String substituteTemplate(IContext context, String template,
-			IMendixObject substitute, boolean HTMLEncode, String datetimeformat) throws Exception
-	{
-		if (template == null || template.trim().isEmpty()) //avoid NPE's, save CPU
+	public static String substituteTemplate(final IContext context, String template,
+			final IMendixObject substitute, final boolean HTMLEncode, final String datetimeformat) {
+		return regexReplaceAll(template, "\\{(@)?([\\w./]+)\\}", new Function<MatchResult, String>() {
+
+			@Override
+			public String apply(MatchResult match)
+			{
+				String value;
+				String path = match.group(2);
+				if (match.group(1) != null)
+					value = String.valueOf(Core.getConfiguration().getConstantValue(path));
+				else {
+					try
+					{
+						value = ORM.getValueOfPath(context, substitute, path,	datetimeformat);
+					}
+					catch (Exception e)
+					{
+						throw new RuntimeException(e);
+					}
+				}
+				return HTMLEncode ? HTMLEncode(value) : value;
+			}
+			
+		});
+	}
+	
+	public static String regexReplaceAll(String source, String regexString, Function<MatchResult, String> replaceFunction)  {
+		if (source == null || source.trim().isEmpty()) // avoid NPE's, save CPU
 			return "";
-		
+	
 		StringBuffer resultString = new StringBuffer();
-		Pattern regex = Pattern.compile("\\{(@)?([\\w./]+)\\}");
-		Matcher regexMatcher = regex.matcher(template);
+		Pattern regex = Pattern.compile(regexString);
+		Matcher regexMatcher = regex.matcher(source);
+		
 		while (regexMatcher.find()) {
 			MatchResult match = regexMatcher.toMatchResult();
-			String value;
-			String path = match.group(2);
-			if (match.group(1) != null)
-				value = String.valueOf(Core.getConfiguration().getConstantValue(path));
-			else
-				value = ORM.getValueOfPath(context, substitute, path, datetimeformat);
-		  value = Matcher.quoteReplacement(value);
-			regexMatcher.appendReplacement(resultString, HTMLEncode ? HTMLEncode(value) : value);
+			String value = replaceFunction.apply(match); 
+			regexMatcher.appendReplacement(resultString, Matcher.quoteReplacement(value));
 		}
 		regexMatcher.appendTail(resultString);
-
+	
 		return resultString.toString();
 	}
 
@@ -125,7 +146,7 @@ public class StringUtils
 	{
 		if (encoded == null)
 			return null;
-		return new String(Base64Utils.decode(encoded));
+		return new String(Base64.decodeBase64(encoded.getBytes()));
 	}
 
 	public static void base64DecodeToFile(IContext context, String encoded, FileDocument targetFile) throws Exception
@@ -135,7 +156,7 @@ public class StringUtils
 		if (encoded == null)
 			throw new IllegalArgumentException("Source data is null");
 		
-		byte [] decoded = org.apache.commons.codec.binary.Base64.decodeBase64(encoded.getBytes());
+		byte [] decoded = Base64.decodeBase64(encoded.getBytes());
 		Core.storeFileDocumentContent(context, targetFile.getMendixObject(), new ByteArrayInputStream(decoded));
 	}
 
@@ -143,7 +164,7 @@ public class StringUtils
 	{
 		if (value == null)
 			return null;
-		return Base64Utils.encode(value.getBytes());
+		return new String(Base64.encodeBase64(value.getBytes()));
 	}
 
 	public static String base64EncodeFile(IContext context, FileDocument file) throws IOException
@@ -153,7 +174,7 @@ public class StringUtils
 		if (!file.getHasContents())
 			throw new IllegalArgumentException("Source file has no contents!");
 		InputStream f = Core.getFileDocumentContent(context, file.getMendixObject());
-		return new String(org.apache.commons.codec.binary.Base64.encodeBase64(IOUtils.toByteArray(f)));		
+		return new String(Base64.encodeBase64(IOUtils.toByteArray(f)));		
 	}
 
 	public static String stringFromFile(IContext context, FileDocument source) throws IOException
@@ -293,7 +314,8 @@ public class StringUtils
 		c.init(Cipher.ENCRYPT_MODE, k);
 		byte[] encryptedData = c.doFinal(valueToEncrypt.getBytes());
 		byte[] iv = c.getIV();
-		return new StringBuilder(Base64.encode(iv)).append(";").append(Base64.encode(encryptedData)).toString();
+		
+		return new String(Base64.encodeBase64(iv)) + ";" + new String(Base64.encodeBase64(encryptedData));
 	}
 
 	public static String decryptString(String key, String valueToDecrypt) throws Exception
@@ -309,8 +331,8 @@ public class StringUtils
 		String[] s = valueToDecrypt.split(";");
 		if (s.length < 2) //Not an encrypted string, just return the original value.
 			return valueToDecrypt;
-		byte[] iv = Base64.decode(s[0]);
-		byte[] encryptedData = Base64.decode(s[1]);
+		byte[] iv = Base64.decodeBase64(s[0].getBytes());
+		byte[] encryptedData = Base64.decodeBase64(s[1].getBytes());
 		c.init(Cipher.DECRYPT_MODE, k, new IvParameterSpec(iv));
 		return new String(c.doFinal(encryptedData));
 	}
@@ -323,7 +345,8 @@ public class StringUtils
 			mac.init(secretKey);
 			mac.update(valueToEncrypt.getBytes("UTF-8"));
 			byte[] hmacData = mac.doFinal();
-			return Base64Utils.encode(hmacData);
+
+            return new String(Base64.encodeBase64(hmacData));
 		}
 		catch (Exception e) {
 			throw new RuntimeException("CommunityCommons::EncodeHmacSha256::Unable to encode: " + e.getMessage(), e);
@@ -337,5 +360,9 @@ public class StringUtils
 					.replace(">", "&gt;")
 					.replace("'", "&#39;");// notice this one: for xml "&#39;" would be "&apos;" (http://blogs.msdn.com/b/kirillosenkov/archive/2010/03/19/apos-is-in-xml-in-html-use-39.aspx)
 		// OWASP also advises to escape "/" but give no convincing reason why: https://www.owasp.org/index.php/XSS_%28Cross_Site_Scripting%29_Prevention_Cheat_Sheet
+	}
+
+	public static String regexQuote(String unquotedLiteral) {
+		return Pattern.quote(unquotedLiteral);
 	}
 }

@@ -9,28 +9,34 @@
 
 package communitycommons.actions;
 
-import com.mendix.core.Core;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.webui.CustomJavaAction;
-import communitycommons.proxies.DTAPMode;
+import com.mendix.systemwideinterfaces.core.IMendixObject;
+import communitycommons.ORM;
 
 /**
- * Returns the DTAP mode of this application instance
- * DEPRECATED: Use IsInDevelopment instead
+ * Copies all common primitive attributes from source to target, which are not necessarily of the same type. This is useful to, for example, translate database object into view objects.
+ * 
+ * Note that no automatic type conversion is done. 
  */
-public class getDTAPMode extends CustomJavaAction<String>
+public class copyAttributes extends CustomJavaAction<Boolean>
 {
-	public getDTAPMode(IContext context)
+	private IMendixObject source;
+	private IMendixObject target;
+
+	public copyAttributes(IContext context, IMendixObject source, IMendixObject target)
 	{
 		super(context);
+		this.source = source;
+		this.target = target;
 	}
 
 	@Override
-	public String executeAction() throws Exception
+	public Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-	    // DEPRECATED: Use IsInDevelopment instead
-		return DTAPMode.valueOf(Core.getConfiguration().getDTAPMode().toString()).toString();
+		ORM.copyAttributes(getContext(), source, target);
+		return true;
 		// END USER CODE
 	}
 
@@ -40,7 +46,7 @@ public class getDTAPMode extends CustomJavaAction<String>
 	@Override
 	public String toString()
 	{
-		return "getDTAPMode";
+		return "copyAttributes";
 	}
 
 	// BEGIN EXTRA CODE

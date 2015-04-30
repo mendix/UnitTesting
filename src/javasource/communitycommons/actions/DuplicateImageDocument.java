@@ -48,7 +48,7 @@ public class DuplicateImageDocument extends CustomJavaAction<Boolean>
 		this.cloneTarget = __cloneTarget == null ? null : system.proxies.Image.initialize(getContext(), __cloneTarget);
 
 		// BEGIN USER CODE
-		return Misc.duplicateImage(this.getContext(), __fileToClone, __cloneTarget, thumbWidth.intValue(), thumbHeight.intValue());
+		return Misc.duplicateImage(this.getContext(), fileToClone.getMendixObject(), cloneTarget.getMendixObject(), thumbWidth.intValue(), thumbHeight.intValue());
 		// END USER CODE
 	}
 

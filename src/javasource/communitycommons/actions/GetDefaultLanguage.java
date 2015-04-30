@@ -9,28 +9,28 @@
 
 package communitycommons.actions;
 
-import com.mendix.core.Core;
+import system.proxies.Language;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.webui.CustomJavaAction;
-import communitycommons.proxies.DTAPMode;
+import com.mendix.systemwideinterfaces.core.IMendixObject;
+import communitycommons.Misc;
 
 /**
- * Returns the DTAP mode of this application instance
- * DEPRECATED: Use IsInDevelopment instead
+ * Get default language
  */
-public class getDTAPMode extends CustomJavaAction<String>
+public class GetDefaultLanguage extends CustomJavaAction<IMendixObject>
 {
-	public getDTAPMode(IContext context)
+	public GetDefaultLanguage(IContext context)
 	{
 		super(context);
 	}
 
 	@Override
-	public String executeAction() throws Exception
+	public IMendixObject executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-	    // DEPRECATED: Use IsInDevelopment instead
-		return DTAPMode.valueOf(Core.getConfiguration().getDTAPMode().toString()).toString();
+		Language defaultLanguage = Misc.getDefaultLanguage(getContext());
+		return defaultLanguage.getMendixObject();
 		// END USER CODE
 	}
 
@@ -40,7 +40,7 @@ public class getDTAPMode extends CustomJavaAction<String>
 	@Override
 	public String toString()
 	{
-		return "getDTAPMode";
+		return "GetDefaultLanguage";
 	}
 
 	// BEGIN EXTRA CODE

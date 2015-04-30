@@ -9,12 +9,14 @@ import aQute.bnd.annotation.component.Reference;
 import com.mendix.core.Core;
 import com.mendix.core.component.LocalComponent;
 import com.mendix.core.component.MxRuntime;
+import com.mendix.integration.Integration;
 
 @Component(immediate = true, properties = {"event.topics:String=com/mendix/events/model/loaded"})
 public class UserActionsRegistrar implements EventHandler
 {
 	private MxRuntime mxRuntime;
 	private LocalComponent component;
+	private Integration integration;
 	
 	@Reference
 	public void setMxRuntime(MxRuntime runtime)
@@ -23,13 +25,19 @@ public class UserActionsRegistrar implements EventHandler
 		mxRuntime.bundleComponentLoaded();
 	}
 	
+	@Reference
+	public void setIntegration(Integration integration)
+	{
+		this.integration = integration;
+	}
+	
 	@Override
 	public void handleEvent(Event event)
 	{
 		if (event.getTopic().equals(com.mendix.core.event.EventConstants.ModelLoadedTopic()))        
 		{
 			component = mxRuntime.getMainComponent();
-			Core.setComponent(component);   
+			Core.initialize(component, integration);   
 			component.actionRegistry().registerUserAction(communitycommons.actions.acquireLock.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.Base64Decode.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.Base64DecodeToFile.class);
@@ -37,6 +45,7 @@ public class UserActionsRegistrar implements EventHandler
 			component.actionRegistry().registerUserAction(communitycommons.actions.Base64EncodeFile.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.Clone.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.commitWithoutEvents.class);
+			component.actionRegistry().registerUserAction(communitycommons.actions.copyAttributes.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.DateTimeToLong.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.DecryptString.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.DeepClone.class);
@@ -46,6 +55,7 @@ public class UserActionsRegistrar implements EventHandler
 			component.actionRegistry().registerUserAction(communitycommons.actions.DuplicateImageDocument.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.encryptMemberIfChanged.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.EncryptString.class);
+			component.actionRegistry().registerUserAction(communitycommons.actions.EndTransaction.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.EscapeHTML.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.executeMicroflowAsUser.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.executeMicroflowAsUser_1.class);
@@ -53,10 +63,11 @@ public class UserActionsRegistrar implements EventHandler
 			component.actionRegistry().registerUserAction(communitycommons.actions.executeMicroflowInBackground.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.executeMicroflowInBatches.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.GenerateHMAC_SHA256_hash.class);
-			component.actionRegistry().registerUserAction(communitycommons.actions.GenerateThumbnail.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.GetApplicationUrl.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.getCreatedByUser.class);
+			component.actionRegistry().registerUserAction(communitycommons.actions.GetDefaultLanguage.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.getDTAPMode.class);
+			component.actionRegistry().registerUserAction(communitycommons.actions.GetFileContentsFromResource.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.getFileSize.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.getGUID.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.GetIntFromDateTime.class);
@@ -68,16 +79,20 @@ public class UserActionsRegistrar implements EventHandler
 			component.actionRegistry().registerUserAction(communitycommons.actions.Hash.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.HTMLEncode.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.HTMLToPlainText.class);
+			component.actionRegistry().registerUserAction(communitycommons.actions.IsInDevelopment.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.Log.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.LongToDateTime.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.memberHasChanged.class);
+			component.actionRegistry().registerUserAction(communitycommons.actions.MergeMultiplePdfs.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.objectHasChanged.class);
+			component.actionRegistry().registerUserAction(communitycommons.actions.OverlayPdfDocument.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.RandomHash.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.RandomString.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.RandomStrongPassword.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.recommitInBatches.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.refreshClass.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.refreshClassByObject.class);
+			component.actionRegistry().registerUserAction(communitycommons.actions.RegexQuote.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.RegexReplaceAll.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.RegexTest.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.releaseAllInactiveLocks.class);
@@ -85,6 +100,7 @@ public class UserActionsRegistrar implements EventHandler
 			component.actionRegistry().registerUserAction(communitycommons.actions.retrieveURL.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.RunMicroflowAsyncInQueue.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.SimpleLog.class);
+			component.actionRegistry().registerUserAction(communitycommons.actions.StartTransaction.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.storeURLToFileDocument.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.StringFromFile.class);
 			component.actionRegistry().registerUserAction(communitycommons.actions.StringLeftPad.class);

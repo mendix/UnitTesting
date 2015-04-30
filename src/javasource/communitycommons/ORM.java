@@ -30,8 +30,9 @@ import com.mendix.systemwideinterfaces.core.meta.IMetaAssociation;
 import com.mendix.systemwideinterfaces.core.meta.IMetaAssociation.AssociationType;
 import com.mendix.systemwideinterfaces.core.meta.IMetaEnumValue;
 import com.mendix.systemwideinterfaces.core.meta.IMetaEnumeration;
+import com.mendix.systemwideinterfaces.core.meta.IMetaObject;
+import com.mendix.systemwideinterfaces.core.meta.IMetaPrimitive;
 import com.mendix.systemwideinterfaces.core.meta.IMetaPrimitive.PrimitiveType;
-import com.mendix.webui.CustomJavaAction;
 
 public class ORM
 {
@@ -40,7 +41,7 @@ public class ORM
 
 	public static Long getGUID(IMendixObject item)
 	{
-		return item.getId().getGuid();
+		return item.getId().toLong();
 	}
 
 	public static String getOriginalValueAsString(IContext context, IMendixObject item,
@@ -71,24 +72,26 @@ public class ORM
 		return item.getMember(context, member).getState() == MemberState.CHANGED || item.getState() != ObjectState.NORMAL; 
 	}
 
-	public static void refreshClass(CustomJavaAction<?> action, String objectType)
-	{
-		action.addRefreshClass(objectType);
-	}
-
-	public static void deepClone(IContext c, IMendixObject source, IMendixObject target, String membersToSkip, String membersToKeep, String reverseAssociations) throws CoreException
+	public static void deepClone(IContext c, IMendixObject source, IMendixObject target, String membersToSkip, String membersToKeep, String reverseAssociations, String excludeEntities, String excludeModules) throws CoreException
 	{
 		List<String> toskip = Arrays.asList((membersToSkip + ",createdDate,changedDate").split(","));
 		List<String> tokeep = Arrays.asList((membersToKeep + ",System.owner,System.changedBy").split(","));
 		List<String> revAssoc = Arrays.asList(reverseAssociations.split(","));
-		duplicate(c, source, target, toskip, tokeep, revAssoc);
+		List<String> skipEntities = Arrays.asList(excludeEntities.split(","));
+		List<String> skipModules = Arrays.asList(excludeModules.split(","));
+        Map<IMendixIdentifier, IMendixIdentifier> mappedIDs = new HashMap<IMendixIdentifier, IMendixIdentifier>();
+		duplicate(c, source, target, toskip, tokeep, revAssoc, skipEntities, skipModules, mappedIDs);
 	}
 
-	private static void duplicate(IContext c, IMendixObject sou, IMendixObject tar,
-			List<String> toskip, List<String> tokeep, List<String> revAssoc) throws CoreException
+	private static void duplicate(IContext ctx, IMendixObject src, IMendixObject tar,
+			List<String> toskip, List<String> tokeep, List<String> revAssoc,
+			List<String> skipEntities, List<String> skipModules,
+			Map<IMendixIdentifier, IMendixIdentifier> mappedObjects) throws CoreException
 	{
-		Map<String, ? extends IMendixObjectMember<?>> members = sou.getMembers(c);
-		String type = sou.getType() + "/";
+		mappedObjects.put(src.getId(), tar.getId());
+		
+	    Map<String, ? extends IMendixObjectMember<?>> members = src.getMembers(ctx);
+		String type = src.getType() + "/";
 
 		for(String key : members.keySet()) 
 			if (!toskip.contains(key) && !toskip.contains(type + key)){
@@ -98,37 +101,60 @@ public class ORM
 				
 				boolean keep = tokeep.contains(key) || tokeep.contains(type + key);
 				
-				if (m instanceof MendixObjectReference && !keep && m.getValue(c) != null) {
-					IMendixObject o = Core.retrieveId(c, ((MendixObjectReference) m).getValue(c));
-					IMendixObject target2 = Core.create(c, o.getType());
-					duplicate(c, o, target2, toskip, tokeep, revAssoc);
-					tar.setValue(c, key, target2.getId());					
+				if (m instanceof MendixObjectReference && !keep && m.getValue(ctx) != null) {
+					IMendixObject o = Core.retrieveId(ctx, ((MendixObjectReference) m).getValue(ctx));
+					IMendixIdentifier refObj = getCloneOfObject(ctx, o, toskip, tokeep, revAssoc, skipEntities, skipModules, mappedObjects);
+                    tar.setValue(ctx, key, refObj);                 
 				}
 				
-				else if (m instanceof MendixObjectReferenceSet && !keep && m.getValue(c) != null) {
+				else if (m instanceof MendixObjectReferenceSet && !keep && m.getValue(ctx) != null) {
 					MendixObjectReferenceSet rs = (MendixObjectReferenceSet) m;
 					List<IMendixIdentifier> res = new ArrayList<IMendixIdentifier>();
-					for(IMendixIdentifier item: rs.getValue(c)) {
-						IMendixObject o = Core.retrieveId(c, item);
-						IMendixObject target2 = Core.create(c, o.getType());
-						duplicate(c, o, target2, toskip, tokeep, revAssoc);
-						res.add(target2.getId());
+					for(IMendixIdentifier item : rs.getValue(ctx)) {
+						IMendixObject o = Core.retrieveId(ctx, item);
+	                    IMendixIdentifier refObj = getCloneOfObject(ctx, o, toskip, tokeep, revAssoc, skipEntities, skipModules, mappedObjects);
+                        res.add(refObj);
 					}
-					tar.setValue(c, key, res);
+					tar.setValue(ctx, key, res);
 				}
 				
 				else if (m instanceof MendixAutoNumber) //skip autonumbers! Ticket 14893
 					continue;
 				
 				else {
-					tar.setValue(c, key, m.getValue(c));
+					tar.setValue(ctx, key, m.getValue(ctx));
 				}
 			}
-		Core.commit(c, tar);
-		duplicateReverseAssociations(c, sou, tar, toskip, tokeep, revAssoc);
-	}	
+		Core.commitWithoutEvents(ctx, tar);
+		duplicateReverseAssociations(ctx, src, tar, toskip, tokeep, revAssoc, skipEntities, skipModules, mappedObjects);
+	}
+	
+	private static IMendixIdentifier getCloneOfObject(IContext ctx, IMendixObject src,
+            List<String> toskip, List<String> tokeep, List<String> revAssoc,
+            List<String> skipEntities, List<String> skipModules,
+            Map<IMendixIdentifier, IMendixIdentifier> mappedObjects) throws CoreException
+	{
+	    String objType = src.getMetaObject().getName();
+	    String modName = src.getMetaObject().getModuleName();
+	    
+	    // if object is already being cloned, return ref to clone
+	    if (mappedObjects.containsKey(src.getId())) {
+            return mappedObjects.get(src.getId());
+        // if object should be skipped based on module or entity, return source object
+        } else if (skipEntities.contains(objType) || skipModules.contains(modName)) {
+            return src.getId();            
+         // if not already being cloned, create clone
+        } else { 
+            IMendixObject clone = Core.instantiate(ctx, src.getType());
+            duplicate(ctx, src, clone, toskip, tokeep, revAssoc, skipEntities, skipModules, mappedObjects);
+            return clone.getId();               
+        }
+	}
 
-	private static void duplicateReverseAssociations(IContext c, IMendixObject sou, IMendixObject tar, List<String> toskip, List<String> tokeep, List<String> revAssocs) throws CoreException
+	private static void duplicateReverseAssociations(IContext ctx, IMendixObject src, IMendixObject tar, 
+	        List<String> toskip, List<String> tokeep, List<String> revAssocs, 
+	        List<String> skipEntities, List<String> skipModules,
+	        Map<IMendixIdentifier, IMendixIdentifier> mappedObjects) throws CoreException
 	{
 		for(String fullAssocName : revAssocs) {
 			String[] parts = fullAssocName.split("/"); 
@@ -138,24 +164,30 @@ public class ORM
 
 			String assocname = parts.length == 3 ? parts[1] : parts[0]; //support length 3 for backward compatibility
 			
-			IMetaAssociation massoc = sou.getMetaObject().getDeclaredMetaAssociationChild(assocname);
+			IMetaAssociation massoc = src.getMetaObject().getDeclaredMetaAssociationChild(assocname);
 	
 			if (massoc != null) {
-				//MWE: what to do with reverse reference sets? -> to avoid spam creating objects on reverse references, do not support referenceset (todo: we could keep a map of converted guids and reuse that!)
-				if (massoc.getType() == AssociationType.REFERENCESET)
+				IMetaObject relationParent = massoc.getParent();
+			    // if the parent is in the exclude list, we can't clone the parent, and setting the 
+				// references to the newly cloned target object will screw up the source data.
+				if (skipEntities.contains(relationParent.getName()) || skipModules.contains(relationParent.getModuleName())){
+			        throw new IllegalArgumentException("A reverse reference has been specified that starts at an entity in the exclude list, this is not possible to clone: '" + fullAssocName + "'");
+			    }
+			    
+			    //MWE: what to do with reverse reference sets? -> to avoid spam creating objects on 
+			    //reverse references, do not support referenceset (todo: we could keep a map of converted guids and reuse that!)
+				if (massoc.getType() == AssociationType.REFERENCESET) {
 					throw new IllegalArgumentException("It is not possible to clone reverse referencesets: '" + fullAssocName + "'");
+				}
 				
-				List<IMendixObject> objs = Core.retrieveXPathQueryEscaped(c, "//%s[%s='%s']", massoc.getParent().getName(), assocname, String.valueOf(sou.getId().getGuid()));
-				List<String> toskip2 = new ArrayList<String>(toskip);
-				toskip2.add(assocname); //do not duplicate the association
+				List<IMendixObject> objs = Core.retrieveXPathQueryEscaped(ctx, "//%s[%s='%s']", 
+				        relationParent.getName(), assocname, String.valueOf(src.getId().toLong()));
 				
 				for(IMendixObject obj : objs) {
-					IMendixObject res = Core.create(c, obj.getType());
-					duplicate(c, obj, res, toskip2, tokeep, revAssocs);
-					
-					//ReferenceSet has already thrown, so safe cast.
-					((MendixObjectReference) res.getMember(c, assocname)).setValue(c, tar.getId());
-					Core.commit(c, res);
+				    @SuppressWarnings("unused") // object is unused on purpose
+                    IMendixIdentifier refObj = getCloneOfObject(ctx, obj, toskip, tokeep, revAssocs, skipEntities, skipModules, mappedObjects);
+                    // setting reference explicitly is not necessary, this has been done in the 
+                    // duplicate() call.
 				}
 			}
 		}
@@ -241,7 +273,9 @@ public class ORM
 			IMendixObjectMember<?> m = members.get(key);
 			if (m.isVirtual())
 				continue;
-			if (withAssociations || ((!(m instanceof MendixObjectReference) && !(m instanceof MendixObjectReferenceSet))))
+			if (m instanceof MendixAutoNumber)
+				continue;
+			if (withAssociations || ((!(m instanceof MendixObjectReference) && !(m instanceof MendixObjectReferenceSet)&& !(m instanceof MendixAutoNumber))))
 				target.setValue(c, key, m.getValue(c));
 		}
 		return true;
@@ -253,10 +287,10 @@ public class ORM
 	{
 		if (!isLocked(item)) {
 			if (!context.getSession().getUser().getName().equals(getLockOwner(item))) 
-			locks.put(item.getId().getGuid(), context.getSession());
+			locks.put(item.getId().toLong(), context.getSession());
 			return true;
 		}
-		else if (locks.get(item.getId().getGuid()).equals(context.getSession()))
+		else if (locks.get(item.getId().toLong()).equals(context.getSession()))
 			return true; //lock owned by this session
 		return false;
 	}
@@ -265,10 +299,10 @@ public class ORM
 	{
 		if (item == null)
 			throw new IllegalArgumentException("No item provided");
-		if (!locks.containsKey(item.getId().getGuid()))
+		if (!locks.containsKey(item.getId().toLong()))
 			return false;
-		if (!sessionIsActive(locks.get(item.getId().getGuid()))) {
-			locks.remove(item.getId().getGuid()); //Remove locks which are nolonger active
+		if (!sessionIsActive(locks.get(item.getId().toLong()))) {
+			locks.remove(item.getId().toLong()); //Remove locks which are nolonger active
 			return false;
 		}
 		return true;
@@ -284,9 +318,9 @@ public class ORM
 
 	public synchronized static Boolean releaseLock(IContext context, IMendixObject item, Boolean force)
 	{
-		if (locks.containsKey(item.getId().getGuid())) {
-			if (force || locks.get(item.getId().getGuid()).equals(context.getSession()))
-				locks.remove(item.getId().getGuid());
+		if (locks.containsKey(item.getId().toLong())) {
+			if (force || locks.get(item.getId().toLong()).equals(context.getSession()))
+				locks.remove(item.getId().toLong());
 		}			
 		return true;
 	}
@@ -308,7 +342,7 @@ public class ORM
 
 	public static String getLockOwner(IMendixObject item)
 	{
-		ISession session = locks.get(item.getId().getGuid());
+		ISession session = locks.get(item.getId().toLong());
 		return session == null ? null : session.getUser().getName();
 	}
 
@@ -384,5 +418,22 @@ public class ORM
 		{
 			throw new RuntimeException(e);
 		}
-	}	
+	}
+
+	public static void copyAttributes(IContext context, IMendixObject source, IMendixObject target)
+	{
+		if (source == null)
+			throw new IllegalStateException("source is null");
+		if (target == null)
+			throw new IllegalStateException("target is null");
+		
+		for(IMetaPrimitive e : target.getMetaObject().getMetaPrimitives()) {
+			if (!source.hasMember(e.getName()))
+				continue;
+			if (e.isVirtual() || e.getType() == PrimitiveType.AutoNumber)
+				continue;
+			
+			target.setValue(context, e.getName(), source.getValue(context, e.getName()));
+		}
+	}
 }

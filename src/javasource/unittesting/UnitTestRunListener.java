@@ -57,7 +57,7 @@ public class UnitTestRunListener extends RunListener {
 	@Override
 	public void testFinished(Description description) throws Exception {
 		TestManager.LOG.info("Finished test " + description.getClassName() + "." + description.getMethodName());
-
+		
 		UnitTest t = getUnitTest(description);
 
 		if (t.getResult() == UnitTestResult._1_Running) {
@@ -65,8 +65,8 @@ public class UnitTestRunListener extends RunListener {
 
 			long delta = getUnitTestInnerTime(description, t);
 
-			t.setResultMessage("OK in " + (delta > 10000 ? Math.round(delta / 1000) + " s" : delta + " ms"));
-
+			t.setResultMessage("JUnit test completed successfully");
+			t.setReadableTime((delta > 10000 ? Math.round(delta / 1000) + " seconds" : delta + " milliseconds"));
 		}
 		
 		t.setLastStep(TestManager.instance().getLastReportedStep());

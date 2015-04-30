@@ -13,7 +13,6 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import unittesting.TestManager;
 import com.mendix.core.Core;
 import com.mendix.systemwideinterfaces.core.IContext;
-import com.mendix.systemwideinterfaces.core.IFeedback.MessageType;
 import com.mendix.systemwideinterfaces.core.IMendixObject;
 import com.mendix.webui.CustomJavaAction;
 
@@ -43,7 +42,7 @@ public class RunAllUnitTestsWrapper extends CustomJavaAction<Boolean>
 		}
 		catch(Exception e) {
 			TestManager.LOG.error("An error occurred while trying to run the unit tests: " + ExceptionUtils.getRootCauseMessage(e), e);
-			this.addTextMessageFeedback(MessageType.WARNING, "An error occurred while trying to run the unit tests: " + ExceptionUtils.getRootCauseMessage(e), true);
+			return false;
 		}
 		return true;
 		// END USER CODE

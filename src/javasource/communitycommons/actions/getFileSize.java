@@ -39,7 +39,7 @@ public class getFileSize extends CustomJavaAction<Long>
 		this.document = __document == null ? null : system.proxies.FileDocument.initialize(getContext(), __document);
 
 		// BEGIN USER CODE
-		return Misc.getFileSize(this.getContext(), __document);
+		return Misc.getFileSize(this.getContext(), document.getMendixObject());
 		// END USER CODE
 	}
 

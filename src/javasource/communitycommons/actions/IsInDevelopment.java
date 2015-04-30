@@ -12,25 +12,22 @@ package communitycommons.actions;
 import com.mendix.core.Core;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.webui.CustomJavaAction;
-import communitycommons.proxies.DTAPMode;
 
 /**
- * Returns the DTAP mode of this application instance
- * DEPRECATED: Use IsInDevelopment instead
+ * Returns true if the environment is a development environment. Calls Core.getConfiguration().isInDevelopment().
  */
-public class getDTAPMode extends CustomJavaAction<String>
+public class IsInDevelopment extends CustomJavaAction<Boolean>
 {
-	public getDTAPMode(IContext context)
+	public IsInDevelopment(IContext context)
 	{
 		super(context);
 	}
 
 	@Override
-	public String executeAction() throws Exception
+	public Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-	    // DEPRECATED: Use IsInDevelopment instead
-		return DTAPMode.valueOf(Core.getConfiguration().getDTAPMode().toString()).toString();
+		return Core.getConfiguration().isInDevelopment();
 		// END USER CODE
 	}
 
@@ -40,7 +37,7 @@ public class getDTAPMode extends CustomJavaAction<String>
 	@Override
 	public String toString()
 	{
-		return "getDTAPMode";
+		return "IsInDevelopment";
 	}
 
 	// BEGIN EXTRA CODE

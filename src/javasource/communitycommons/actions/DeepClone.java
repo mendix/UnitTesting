@@ -22,6 +22,8 @@ import com.mendix.webui.CustomJavaAction;
  * - MembersToSkip: members which should not  be set at all
  * - MembersToKeep: references which should be set, but not cloned. (so source and target will refer to exactly the same object). If an association is not part of this property, it will be cloned.
  * - ReverseAssociations: 1 - 0 assications which refer to target, which will be cloned as well. Only the reference name itself needs to be mentioned.
+ * - excludeEntities: entities that will not be cloned. references to these entities will refer to the same object as the source did.
+ * - excludeModules: modules that will have none of their enities cloned. Behaves similar to excludeEntities.
  * 
  * members format: <membername> or <module.association> or <module.objecttype/membername>, where objecttype is the concrete type of the object being cloned. 
  * 
@@ -40,8 +42,10 @@ public class DeepClone extends CustomJavaAction<Boolean>
 	private String membersToSkip;
 	private String membersToKeep;
 	private String reverseAssociations;
+	private String excludeEntities;
+	private String excludeModules;
 
-	public DeepClone(IContext context, IMendixObject source, IMendixObject target, String membersToSkip, String membersToKeep, String reverseAssociations)
+	public DeepClone(IContext context, IMendixObject source, IMendixObject target, String membersToSkip, String membersToKeep, String reverseAssociations, String excludeEntities, String excludeModules)
 	{
 		super(context);
 		this.source = source;
@@ -49,13 +53,21 @@ public class DeepClone extends CustomJavaAction<Boolean>
 		this.membersToSkip = membersToSkip;
 		this.membersToKeep = membersToKeep;
 		this.reverseAssociations = reverseAssociations;
+		this.excludeEntities = excludeEntities;
+		this.excludeModules = excludeModules;
 	}
 
 	@Override
 	public Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		ORM.deepClone(getContext(), source, target, membersToSkip, membersToKeep, reverseAssociations);
+        this.membersToSkip       = this.membersToSkip == null       ? "" : this.membersToSkip;
+        this.membersToKeep       = this.membersToKeep == null       ? "" : this.membersToKeep;
+        this.reverseAssociations = this.reverseAssociations == null ? "" : this.reverseAssociations;
+        this.excludeEntities     = this.excludeEntities == null     ? "" : this.excludeEntities;
+        this.excludeModules      = this.excludeModules == null      ? "" : this.excludeModules;
+	    
+		ORM.deepClone(getContext(), source, target, membersToSkip, membersToKeep, reverseAssociations, excludeEntities, excludeModules);
 		return true;
 		// END USER CODE
 	}

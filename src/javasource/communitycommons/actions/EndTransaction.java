@@ -9,28 +9,25 @@
 
 package communitycommons.actions;
 
-import com.mendix.core.Core;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.webui.CustomJavaAction;
-import communitycommons.proxies.DTAPMode;
 
 /**
- * Returns the DTAP mode of this application instance
- * DEPRECATED: Use IsInDevelopment instead
+ * Ends the current transaction.
  */
-public class getDTAPMode extends CustomJavaAction<String>
+public class EndTransaction extends CustomJavaAction<Boolean>
 {
-	public getDTAPMode(IContext context)
+	public EndTransaction(IContext context)
 	{
 		super(context);
 	}
 
 	@Override
-	public String executeAction() throws Exception
+	public Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-	    // DEPRECATED: Use IsInDevelopment instead
-		return DTAPMode.valueOf(Core.getConfiguration().getDTAPMode().toString()).toString();
+		getContext().endTransaction();
+		return true;
 		// END USER CODE
 	}
 
@@ -40,7 +37,7 @@ public class getDTAPMode extends CustomJavaAction<String>
 	@Override
 	public String toString()
 	{
-		return "getDTAPMode";
+		return "EndTransaction";
 	}
 
 	// BEGIN EXTRA CODE

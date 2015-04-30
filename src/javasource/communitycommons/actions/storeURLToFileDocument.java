@@ -45,7 +45,7 @@ public class storeURLToFileDocument extends CustomJavaAction<Boolean>
 		this.document = __document == null ? null : system.proxies.FileDocument.initialize(getContext(), __document);
 
 		// BEGIN USER CODE
-		return Misc.storeURLToFileDocument(this.getContext(), url, __document, filename);
+		return Misc.storeURLToFileDocument(this.getContext(), url, document.getMendixObject(), filename);
 		// END USER CODE
 	}
 

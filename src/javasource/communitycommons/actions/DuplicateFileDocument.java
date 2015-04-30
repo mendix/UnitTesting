@@ -44,7 +44,7 @@ public class DuplicateFileDocument extends CustomJavaAction<Boolean>
 		this.cloneTarget = __cloneTarget == null ? null : system.proxies.FileDocument.initialize(getContext(), __cloneTarget);
 
 		// BEGIN USER CODE
-		return Misc.duplicateFileDocument(this.getContext(), __fileToClone, __cloneTarget);
+		return Misc.duplicateFileDocument(this.getContext(), fileToClone.getMendixObject(), cloneTarget.getMendixObject());
 		// END USER CODE
 	}
 

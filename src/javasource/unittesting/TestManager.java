@@ -215,7 +215,8 @@ public class TestManager
 			List<String> mfnames = findMicroflowUnitTests(testSuite);
 	
 			for (String mf : mfnames){
-				if (!runMicroflowTest(mf, getUnitTest(context, testSuite, mf, true))) {
+				if (!runMicroflowTest(mf, getUnitTest(context, testSuite, mf, true), testSuite)) 
+				{
 					testSuite.setTestFailedCount(testSuite.getTestFailedCount() + 1);
 					testSuite.commit();
 				}
@@ -262,8 +263,17 @@ public class TestManager
 		/** 
 		 * Prepare...
 		 */
-		LOG.info("Starting unittest " + mf);
 		TestSuite testSuite = test.getUnitTest_TestSuite();
+
+		return runMicroflowTest(mf, test, testSuite);
+	}
+	
+	private boolean runMicroflowTest(String mf, UnitTest test, TestSuite testSuite) throws CoreException
+	{
+		/** 
+		 * Prepare...
+		 */
+		LOG.info("Starting unittest for microflow " + mf);
 
 		reportStep("Starting microflow test '" + mf + "'");
 		
@@ -300,10 +310,15 @@ public class TestManager
 			boolean res = 	resultObject == null || Boolean.TRUE.equals(resultObject) || "".equals(resultObject);
 				
 			test.setResult(res ? UnitTestResult._3_Success : UnitTestResult._2_Failed);
-			test.setResultMessage((res ? "OK" : "FAILED") +  " in " + (start > 10000 ? Math.round(start / 1000) + " s." : start + " ms. Result: " + String.valueOf(resultObject)));
+			
+			if (res) {
+				test.setResultMessage("Microflow completed successfully");
+			}
+			
 			return res;
 		}
 		catch(Exception e) {
+			start = System.currentTimeMillis() - start;
 			test.setResult(UnitTestResult._2_Failed);
 			Throwable cause = ExceptionUtils.getRootCause(e);
 			if (cause != null && cause instanceof AssertionException)
@@ -318,6 +333,7 @@ public class TestManager
 				mfContext.rollbackTransAction();
 				
 			test.setLastStep(lastStep);
+			test.setReadableTime((start > 10000 ? Math.round(start / 1000) + " seconds" : start + " milliseconds"));
 			commitSilent(test);
 
 			LOG.info("Finished unittest " + mf + ": " + test.getResult());
@@ -562,7 +578,5 @@ public class TestManager
 		//MWE: this system is problematic weird if used from multiple simultanously used threads..
 		return lastStep;
 	}
-
-
 	
 }

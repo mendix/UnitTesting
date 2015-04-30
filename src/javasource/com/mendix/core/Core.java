@@ -1,6 +1,7 @@
 package com.mendix.core;
 
 import java.io.InputStream;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -19,10 +20,13 @@ import com.mendix.core.component.LocalComponent;
 import com.mendix.core.component.InternalCore;
 import com.mendix.core.conf.Configuration;
 import com.mendix.externalinterface.connector.RequestHandler;
+import com.mendix.integration.Integration;
+import com.mendix.integration.WebserviceException;
 import com.mendix.logging.ILogNode;
 import com.mendix.logging.LogSubscriber;
 import com.mendix.m2ee.api.IMxRuntimeRequest;
 import com.mendix.systemwideinterfaces.MendixException;
+import com.mendix.systemwideinterfaces.IWebserviceResponse;
 import com.mendix.systemwideinterfaces.connectionbus.data.IDataTable;
 import com.mendix.systemwideinterfaces.connectionbus.requests.IMetaAssociationSchema;
 import com.mendix.systemwideinterfaces.connectionbus.requests.IRetrievalSchema;
@@ -47,10 +51,12 @@ public final class Core
 	public Core() {}
 
 	private static LocalComponent component;
+	private static Integration integration;
 
-	public static void setComponent(LocalComponent LocalComponent)
+	public static void initialize(LocalComponent localComponent, Integration i)
 	{
-		component = LocalComponent;
+		component = localComponent;
+		integration = i;
 	}
 	
 	public static LocalComponent getComponent()
@@ -406,21 +412,7 @@ public final class Core
 	{
 		return component.core().instantiateAsync(context, objectType);
 	}
-	
-	/**
-	 * Creates a new IMendixObject with the given object type (synchronously). The object will be stored in the 
-	 * database immediately. The rollback method can be used to cancel this.
-	 * @param context the context.
-	 * @param objectType type of object to create (e.g. "System.User"). 
-	 * @return returns the newly created object.
-	 * @deprecated use Core.instantiate instead.
-	 */
-	@Deprecated
-	public static IMendixObject create(IContext context, String objectType) throws CoreException
-	{
-		return component.core().create(context, objectType);
-	}
-	
+		
 	/**
 	 * Creates a new IMendixObject with the given object type (synchronously). The object will NOT be stored in the 
 	 * database. This action is executed in a transaction.
@@ -1435,7 +1427,7 @@ public final class Core
 	 */
 	public static void importXmlStream(IContext context, InputStream xmlStream, String xmlToDomainMappingName, IMendixObject mappingParameter)
 	{
-		component.core().importXmlStream(context, xmlStream, xmlToDomainMappingName, mappingParameter);
+		integration.importXmlStream(context, xmlStream, xmlToDomainMappingName, mappingParameter);
 	}
 	
 	/**
@@ -1450,7 +1442,121 @@ public final class Core
 	public static Object importXmlStream(IContext context, InputStream xmlStream, String xmlToDomainMappingName, IMendixObject mappingParameter,
 			boolean storeResultInVariable, boolean hasListReturnValue)
 	{
-		return component.core().importXmlStream(context, xmlStream, xmlToDomainMappingName, mappingParameter, storeResultInVariable, hasListReturnValue);
+		return integration.importXmlStream(context, xmlStream, xmlToDomainMappingName, mappingParameter, storeResultInVariable, -1, hasListReturnValue);
+	}
+	
+	/**
+	 * Call a webservice
+	 * Post method headers:
+	 *  - Content-Type: text/xml
+	 *  - Host: location host (e.g. www.w3schools.com)
+	 *  - SoapAction: soapAction (e.g. http://tempuri.com/FahrenheitToCelsius)
+	 * @param location the webservice location url
+	 * @param soapAction the webservice soap action
+	 * @param soapRequestMessage
+	 * <pre>
+	 * {@code
+	 * <?xml version="1.0" encoding="utf-8"?>
+	 *	<soap:envelope 
+	 *			xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+	 *			xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+	 *			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	 *	>
+	 *		<soap:header>
+	 *			<authentication>
+	 *				<username> username </username>
+	 *				<password> password </password>
+	 *			</authentication>
+	 *		</soap:header>
+     *		<soap:body>
+     *   		<operationName xmlns:=targetNamespace>
+     *       		<x>5</x>
+     *       		<y>5.0</y>
+     *   		</operationName>
+     *		</soap:body>
+	 * </soap:envelope>
+	 * }
+	 * </pre>
+	 * @return a soap envelope response stream, e.g.:
+	 * <pre>
+	 * {@code
+	 * <?xml version="1.0" encoding="utf-8"?>
+	 * <soap:Envelope 
+	 * 		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	 * 		xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+	 * 		xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+	 * >
+  	 * 		<soap:Body>
+     * 			<OperationResponse xmlns=namespace>
+     * 				<Result>string</Result>
+     * 			</OperationResponse>
+     * 		</soap:Body>
+	 *	</soap:Envelope>
+	 *}
+	 *</pre>
+	 * @throws WebserviceException
+	 * @throws IOException
+	 */
+	public static IWebserviceResponse callWebservice(String location, String soapAction, String soapRequestMessage) 
+	{
+		return integration.callWebservice(location, soapAction, soapRequestMessage);
+	}
+	
+	/**
+	 * Call a webservice
+	 * Post method headers:
+	 *  - Content-Type: text/xml
+	 *  - Host: location host (e.g. www.w3schools.com)
+	 *  - SoapAction: soapAction (e.g. http://tempuri.com/FahrenheitToCelsius)
+	 * @param location the webservice location url
+	 * @param soapAction the webservice soap action
+	 * @param soapRequestMessage
+	 * <pre>
+	 * {@code 
+	 * <?xml version="1.0" encoding="utf-8"?>
+	 *	<soap:envelope 
+	 *			xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+	 *			xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+	 *			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	 *	>
+	 *		<soap:header>
+	 *			<authentication>
+	 *				<username> username </username>
+	 *				<password> password </password>
+	 *			</authentication>
+	 *		</soap:header>
+     *		<soap:body>
+     *   		<operationName xmlns:=targetNamespace>
+     *       		<x>5</x>
+     *       		<y>5.0</y>
+     *   		</operationName>
+     *		</soap:body>
+	 * </soap:envelope>
+	 * }
+	 * </pre>
+	 * @return a soap envelope response stream, e.g.:
+	 * <pre>
+	 * {@code
+	 * <?xml version="1.0" encoding="utf-8"?>
+	 * <soap:Envelope 
+	 * 		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	 * 		xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+	 * 		xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+	 * >
+  	 * 		<soap:Body>
+     * 			<OperationResponse xmlns=namespace>
+     * 				<Result>string</Result>
+     * 			</OperationResponse>
+     * 		</soap:Body>
+	 *	</soap:Envelope>
+	 *}
+	 *</pre>
+	 * @throws WebserviceException
+	 * @throws IOException
+	 */
+	public static IWebserviceResponse callWebservice(String location, String soapAction, InputStream soapRequestMessage) 
+	{
+		return integration.callWebservice(location, soapAction, soapRequestMessage);
 	}
 	
 	/**

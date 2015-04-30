@@ -9,28 +9,28 @@
 
 package communitycommons.actions;
 
-import com.mendix.core.Core;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.webui.CustomJavaAction;
-import communitycommons.proxies.DTAPMode;
+import communitycommons.StringUtils;
 
 /**
- * Returns the DTAP mode of this application instance
- * DEPRECATED: Use IsInDevelopment instead
+ * Escapes a string value so that it can be used literally with Mendix build-in regex replacement functions. (Otherwise the dollar sign would be interpreted as back reference to a match for example). 
  */
-public class getDTAPMode extends CustomJavaAction<String>
+public class RegexQuote extends CustomJavaAction<String>
 {
-	public getDTAPMode(IContext context)
+	private String unquotedLiteral;
+
+	public RegexQuote(IContext context, String unquotedLiteral)
 	{
 		super(context);
+		this.unquotedLiteral = unquotedLiteral;
 	}
 
 	@Override
 	public String executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-	    // DEPRECATED: Use IsInDevelopment instead
-		return DTAPMode.valueOf(Core.getConfiguration().getDTAPMode().toString()).toString();
+		return StringUtils.regexQuote(unquotedLiteral);
 		// END USER CODE
 	}
 
@@ -40,7 +40,7 @@ public class getDTAPMode extends CustomJavaAction<String>
 	@Override
 	public String toString()
 	{
-		return "getDTAPMode";
+		return "RegexQuote";
 	}
 
 	// BEGIN EXTRA CODE

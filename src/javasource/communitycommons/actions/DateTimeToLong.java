@@ -9,29 +9,28 @@
 
 package communitycommons.actions;
 
-import java.util.Date;
-import communitycommons.DateTime;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.webui.CustomJavaAction;
+import communitycommons.DateTime;
 
 /**
  * Converts a DateTime to a Unix timestamps. (Milliseconds since 1-1-1970)
  */
 public class DateTimeToLong extends CustomJavaAction<Long>
 {
-	private java.util.Date Date;
+	private java.util.Date dateObject;
 
-	public DateTimeToLong(IContext context, java.util.Date Date)
+	public DateTimeToLong(IContext context, java.util.Date dateObject)
 	{
 		super(context);
-		this.Date = Date;
+		this.dateObject = dateObject;
 	}
 
 	@Override
 	public Long executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		return DateTime.dateTimeToLong(Date);
+		return DateTime.dateTimeToLong(dateObject);
 		// END USER CODE
 	}
 

@@ -9,10 +9,9 @@
 
 package communitycommons.actions;
 
-import java.util.Date;
-import communitycommons.DateTime;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.webui.CustomJavaAction;
+import communitycommons.DateTime;
 
 /**
  * Converts a datetime to an integer based on the selector used.
