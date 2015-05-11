@@ -5,9 +5,8 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.auth.InvalidCredentialsException;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.auth.InvalidCredentialsException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -49,20 +48,20 @@ public class RemoteApiServlet extends RequestHandler {
 		
 		try {
 			if (!"POST".equals(request.getMethod()))
-				response.setStatus(HttpStatus.SC_METHOD_NOT_ALLOWED);
+				response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
 			else if (COMMAND_START.equals(path))
 				serveRunStart(request, response, path);
 			else if (COMMAND_STATUS.equals(path))
 				serveRunStatus(request, response, path);
 			else
-				response.setStatus(HttpStatus.SC_NOT_FOUND);
+				response.setStatus(HttpServletResponse.SC_NOT_FOUND);
 		}
 		catch (IllegalArgumentException e) {
-			response.setStatus(HttpStatus.SC_BAD_REQUEST);
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			write(response, e.getMessage());
 		}
 		catch (InvalidCredentialsException e) {
-			response.setStatus(HttpStatus.SC_UNAUTHORIZED);
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 			write(response, "Invalid password provided");
 		}
 	}
@@ -85,13 +84,13 @@ public class RemoteApiServlet extends RequestHandler {
 			throw new IllegalArgumentException("No testrun was started yet");
 		}
 		
-		response.setStatus(HttpStatus.SC_OK);
+		response.setStatus(HttpServletResponse.SC_OK);
 		response.setHeader("Content-Type", "application/json");
 		write(response, testSuiteRunner.getStatus().toString(4));
 	}
 
 	private synchronized void serveRunStart(HttpServletRequest request,
-			HttpServletResponse response, String path) throws IOException, CoreException {
+			HttpServletResponse response, String path) throws IOException, CoreException, InvalidCredentialsException {
 		JSONObject input = parseInput(request);
 		verifyPassword(input);
 	
@@ -116,7 +115,7 @@ public class RemoteApiServlet extends RequestHandler {
 		};
 		
 		t.start();
-		response.setStatus(HttpStatus.SC_NO_CONTENT);		
+		response.setStatus(HttpServletResponse.SC_NO_CONTENT);		
 	}
 		
 	
