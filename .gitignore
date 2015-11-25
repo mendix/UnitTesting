@@ -10,8 +10,10 @@ src/*.mpr.right*
 src/.settings
 src/deployment
 src/releases
+src/javasource/communitycommons
 proxies
 *.launch
 .classpath
 .project
 #mxgit-marker-end
+
