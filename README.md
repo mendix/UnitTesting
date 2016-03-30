@@ -1,7 +1,7 @@
 UnitTesting
 ===========
 
-Module to run Mendix and JUnit unit test inside a project.
+Module to run Mendix and JUnit unit tests inside a project.
 
 ## Dependencies
 
