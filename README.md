@@ -4,9 +4,10 @@ UnitTesting
 Module to run Mendix and JUnit unit tests inside a project.
 
 ## Dependencies
-
-- Mendix 4.1.1 or higher
 - Community Commons module
+- junit-4.11.jar
+- org.apache.httpcomponents.httpclient_4.4.1.jar
+- org.apache.httpcomponents.httpcore_4.4.1.jar
 
 ## Installation
 
