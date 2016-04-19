@@ -196,21 +196,23 @@ public class TestManager
 		/**
 		 * Run java unit tests
 		 */
-		Class<?>[] clazzez = null;
-		try {
-			clazzez = getUnitTestClasses(testSuite);
+		if(unittesting.proxies.constants.Constants.getFindJUnitTests())
+		{
+			Class<?>[] clazzez = null;
+			try {
+				clazzez = getUnitTestClasses(testSuite);
+			}
+			catch(Exception e) {
+				LOG.error(CLOUD_SECURITY_ERROR + e.getMessage(), e);
+			}
+	
+			if (clazzez != null && clazzez.length > 0) {
+				JUnitCore junit = new JUnitCore();
+				junit.addListener(new UnitTestRunListener(context, testSuite));
+	
+				junit.run(clazzez);
+			}
 		}
-		catch(Exception e) {
-			LOG.error(CLOUD_SECURITY_ERROR + e.getMessage(), e);
-		}
-
-		if (clazzez != null && clazzez.length > 0) {
-			JUnitCore junit = new JUnitCore();
-			junit.addListener(new UnitTestRunListener(context, testSuite));
-
-			junit.run(clazzez);
-		}
-
 		/** 
 		 * Run microflow tests
 		 * 
@@ -516,7 +518,7 @@ public class TestManager
 				test.commit();
 			}
 			
-			if(unittesting.proxies.constants.Constants.getFindJUnitTests().toString().equals("true"))
+			if(unittesting.proxies.constants.Constants.getFindJUnitTests())
 			{
 				/*
 				 * Find Junit tests
