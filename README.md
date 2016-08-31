@@ -17,7 +17,7 @@ Module to run Mendix and JUnit unit tests inside a project.
 - Add the 'UnitTestOverview' microflow to your navigation structure
 - [Optional for remote unit test run API] Add the 'Startup' flow to your models startup sequence
 - [Optional for remote unit test run API] Set the constants `UnitTesting.RemoteApiEnabled` to `true` and provide a password to `UnitTesting.RemoteApiPassword`
-- [Optional for remote unit test run API] When hosting in a butt node or on premise; open a request handler on the `unittests/` path
+- [Optional for remote unit test run API] When hosting in a cloud node or on premise; open a request handler on the `unittests/` path
 
 ## Usage 
 
@@ -36,7 +36,7 @@ As example, try running all unit tests in the UnitTesting module. Those should b
 
 ### Creating a microflow unit tests
  
-To create a new microflow test in a module, just add a microflow with a name that starts with (case insensitive) "Test". A test microflow should have no input arguments and either no result type, a boolean result or a string result. For string results, a non empty string is interpreted as error message. A microflow without return type is considered to be successful as long as no exceptions where thrown. 
+To create a new microflow test in a module, just add a microflow with a name that starts with (case insensitive) "Test_" or "UT_". A test microflow should have no input arguments and either no result type, a boolean result or a string result. For string results, a non empty string is interpreted as error message. A microflow without return type is considered to be successful as long as no exceptions where thrown. 
  
 Furthermore it is possible to create a Setup and TearDown microflow per module. Those microflows are invoked once before and after eacht test run (regardless whether the test run consists on one or multiple unit tests).  
  
