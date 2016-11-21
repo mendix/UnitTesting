@@ -42,7 +42,7 @@ public class MergeMultiplePdfs extends CustomJavaAction<Boolean>
 		this.MergedDocument = __MergedDocument == null ? null : system.proxies.FileDocument.initialize(getContext(), __MergedDocument);
 
 		// BEGIN USER CODE
-		return Misc.mergePDF(this.getContext(), this.FilesToMerge, __MergedDocument);
+		return Misc.mergePDF(this.getContext(), this.FilesToMerge, this.MergedDocument.getMendixObject());
 		// END USER CODE
 	}
 
