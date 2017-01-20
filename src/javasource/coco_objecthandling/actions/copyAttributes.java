@@ -7,24 +7,35 @@
 // Other code you write will be lost the next time you deploy the project.
 // Special characters, e.g., é, ö, à, etc. are supported in comments.
 
-package unittesting.actions;
+package coco_objecthandling.actions;
 
-import unittesting.TestManager;
 import com.mendix.systemwideinterfaces.core.IContext;
+import com.mendix.systemwideinterfaces.core.IMendixObject;
 import com.mendix.webui.CustomJavaAction;
+import coco_objecthandling.ORM;
 
-public class FindAllUnitTests extends CustomJavaAction<Boolean>
+/**
+ * Copies all common primitive attributes from source to target, which are not necessarily of the same type. This is useful to, for example, translate persistent object into non-persistant (view) objects.
+ * 
+ * Note that no automatic type conversion is done. 
+ */
+public class copyAttributes extends CustomJavaAction<Boolean>
 {
-	public FindAllUnitTests(IContext context)
+	private IMendixObject source;
+	private IMendixObject target;
+
+	public copyAttributes(IContext context, IMendixObject source, IMendixObject target)
 	{
 		super(context);
+		this.source = source;
+		this.target = target;
 	}
 
 	@Override
 	public Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		TestManager.instance().findAllTests(getContext());
+		ORM.copyAttributes(getContext(), source, target);
 		return true;
 		// END USER CODE
 	}
@@ -35,7 +46,7 @@ public class FindAllUnitTests extends CustomJavaAction<Boolean>
 	@Override
 	public String toString()
 	{
-		return "FindAllUnitTests";
+		return "copyAttributes";
 	}
 
 	// BEGIN EXTRA CODE

@@ -15,7 +15,6 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Test;
@@ -25,17 +24,17 @@ import org.junit.runners.JUnit4;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
 
-import unittesting.proxies.TestSuite;
-import unittesting.proxies.UnitTest;
-import unittesting.proxies.UnitTestResult;
-
 import com.mendix.core.Core;
 import com.mendix.core.CoreException;
 import com.mendix.logging.ILogNode;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.systemwideinterfaces.core.IDataType;
+import com.mendix.systemwideinterfaces.core.IMendixObject;
 
-import communitycommons.XPath;
+import coco_objecthandling.XPath;
+import unittesting.proxies.TestSuite;
+import unittesting.proxies.UnitTest;
+import unittesting.proxies.UnitTestResult;
 
 /**
  * @author mwe
@@ -161,13 +160,15 @@ public class TestManager
 		//Context without transaction!
 		IContext context = Core.createSystemContext();
 		
-		for(TestSuite suite : XPath.create(context, TestSuite.class).all()) {
-			suite.setResult(null);
-			suite.commit();
+		List<IMendixObject> testsuites = Core.retrieveXPathQuery(context,"//" +TestSuite.entityName);
+		
+		for(IMendixObject suite : testsuites) {
+			suite.setValue(context, TestSuite.MemberNames.Result.toString(), null);;	
 		}
+		Core.commit(context, testsuites);
 
-		for(TestSuite suite : XPath.create(context, TestSuite.class).all()) {
-			runTestSuite(context, suite);
+		for(IMendixObject suite : testsuites) {
+			runTestSuite(context, TestSuite.load(context, suite.getId()));
 		}
 
 		LOG.info("Finished testrun on all suites");

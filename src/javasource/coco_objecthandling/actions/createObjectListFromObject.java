@@ -7,25 +7,32 @@
 // Other code you write will be lost the next time you deploy the project.
 // Special characters, e.g., é, ö, à, etc. are supported in comments.
 
-package unittesting.actions;
+package coco_objecthandling.actions;
 
-import unittesting.TestManager;
+import java.util.ArrayList;
+import java.util.List;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.webui.CustomJavaAction;
+import com.mendix.systemwideinterfaces.core.IMendixObject;
 
-public class FindAllUnitTests extends CustomJavaAction<Boolean>
+public class createObjectListFromObject extends CustomJavaAction<java.util.List<IMendixObject>>
 {
-	public FindAllUnitTests(IContext context)
+	private IMendixObject inputObject;
+
+	public createObjectListFromObject(IContext context, IMendixObject inputObject)
 	{
 		super(context);
+		this.inputObject = inputObject;
 	}
 
 	@Override
-	public Boolean executeAction() throws Exception
+	public java.util.List<IMendixObject> executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		TestManager.instance().findAllTests(getContext());
-		return true;
+		List<IMendixObject> objectList = new ArrayList<IMendixObject>();
+		objectList.add(this.inputObject);
+		
+		return objectList;
 		// END USER CODE
 	}
 
@@ -35,7 +42,7 @@ public class FindAllUnitTests extends CustomJavaAction<Boolean>
 	@Override
 	public String toString()
 	{
-		return "FindAllUnitTests";
+		return "createObjectListFromObject";
 	}
 
 	// BEGIN EXTRA CODE

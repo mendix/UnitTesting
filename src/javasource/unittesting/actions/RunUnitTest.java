@@ -14,9 +14,6 @@ import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.systemwideinterfaces.core.IMendixObject;
 import com.mendix.webui.CustomJavaAction;
 
-/**
- * 
- */
 public class RunUnitTest extends CustomJavaAction<Boolean>
 {
 	private IMendixObject __unitTest;

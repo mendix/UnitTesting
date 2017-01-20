@@ -7,25 +7,31 @@
 // Other code you write will be lost the next time you deploy the project.
 // Special characters, e.g., é, ö, à, etc. are supported in comments.
 
-package unittesting.actions;
+package coco_objecthandling.actions;
 
-import unittesting.TestManager;
 import com.mendix.systemwideinterfaces.core.IContext;
+import com.mendix.systemwideinterfaces.core.IMendixObject;
 import com.mendix.webui.CustomJavaAction;
+import coco_objecthandling.XPath;
 
-public class FindAllUnitTests extends CustomJavaAction<Boolean>
+/**
+ * Removes ALL instances of a certain domain object type using batches.
+ */
+public class deleteAll extends CustomJavaAction<Boolean>
 {
-	public FindAllUnitTests(IContext context)
+	private IMendixObject entityType;
+
+	public deleteAll(IContext context, IMendixObject entityType)
 	{
 		super(context);
+		this.entityType = entityType;
 	}
 
 	@Override
 	public Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		TestManager.instance().findAllTests(getContext());
-		return true;
+		return XPath.create(this.getContext(), entityType.toString()).deleteAll();
 		// END USER CODE
 	}
 
@@ -35,7 +41,7 @@ public class FindAllUnitTests extends CustomJavaAction<Boolean>
 	@Override
 	public String toString()
 	{
-		return "FindAllUnitTests";
+		return "deleteAll";
 	}
 
 	// BEGIN EXTRA CODE

@@ -13,9 +13,6 @@ import unittesting.TestManager;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.webui.CustomJavaAction;
 
-/**
- * 
- */
 public class ReportStepJava extends CustomJavaAction<Boolean>
 {
 	private String message;

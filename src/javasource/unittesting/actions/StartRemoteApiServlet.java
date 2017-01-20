@@ -14,9 +14,6 @@ import com.mendix.core.Core;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.webui.CustomJavaAction;
 
-/**
- * 
- */
 public class StartRemoteApiServlet extends CustomJavaAction<Boolean>
 {
 	private String password;

@@ -7,24 +7,35 @@
 // Other code you write will be lost the next time you deploy the project.
 // Special characters, e.g., é, ö, à, etc. are supported in comments.
 
-package unittesting.actions;
+package coco_objecthandling.actions;
 
-import unittesting.TestManager;
+import com.mendix.core.Core;
 import com.mendix.systemwideinterfaces.core.IContext;
+import com.mendix.systemwideinterfaces.core.ISession;
 import com.mendix.webui.CustomJavaAction;
+import com.mendix.systemwideinterfaces.core.IMendixObject;
 
-public class FindAllUnitTests extends CustomJavaAction<Boolean>
+/**
+ * This function commits an object in a new context and transaction, making sure it gets persisted in the database (regarding which exception happens after invocation).
+ */
+public class commitInSeparateDatabaseTransaction extends CustomJavaAction<Boolean>
 {
-	public FindAllUnitTests(IContext context)
+	private IMendixObject mxObject;
+
+	public commitInSeparateDatabaseTransaction(IContext context, IMendixObject mxObject)
 	{
 		super(context);
+		this.mxObject = mxObject;
 	}
 
 	@Override
 	public Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		TestManager.instance().findAllTests(getContext());
+		ISession session = getContext().getSession();
+		IContext newContext = session.createContext();
+		Core.commit(newContext, mxObject);
+		newContext.endTransaction();
 		return true;
 		// END USER CODE
 	}
@@ -35,7 +46,7 @@ public class FindAllUnitTests extends CustomJavaAction<Boolean>
 	@Override
 	public String toString()
 	{
-		return "FindAllUnitTests";
+		return "commitInSeparateDatabaseTransaction";
 	}
 
 	// BEGIN EXTRA CODE

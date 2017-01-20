@@ -7,25 +7,33 @@
 // Other code you write will be lost the next time you deploy the project.
 // Special characters, e.g., é, ö, à, etc. are supported in comments.
 
-package unittesting.actions;
+package coco_objecthandling.actions;
 
-import unittesting.TestManager;
 import com.mendix.systemwideinterfaces.core.IContext;
+import com.mendix.systemwideinterfaces.core.IMendixObject;
 import com.mendix.webui.CustomJavaAction;
+import coco_objecthandling.ORM;
 
-public class FindAllUnitTests extends CustomJavaAction<Boolean>
+/**
+ * Returns the user that created the object 
+ * 
+ * (or empty if not applicable).
+ */
+public class getCreatedByUser extends CustomJavaAction<IMendixObject>
 {
-	public FindAllUnitTests(IContext context)
+	private IMendixObject thing;
+
+	public getCreatedByUser(IContext context, IMendixObject thing)
 	{
 		super(context);
+		this.thing = thing;
 	}
 
 	@Override
-	public Boolean executeAction() throws Exception
+	public IMendixObject executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		TestManager.instance().findAllTests(getContext());
-		return true;
+		return ORM.getCreatedByUser(getContext(), thing);
 		// END USER CODE
 	}
 
@@ -35,7 +43,7 @@ public class FindAllUnitTests extends CustomJavaAction<Boolean>
 	@Override
 	public String toString()
 	{
-		return "FindAllUnitTests";
+		return "getCreatedByUser";
 	}
 
 	// BEGIN EXTRA CODE

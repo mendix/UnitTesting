@@ -7,25 +7,31 @@
 // Other code you write will be lost the next time you deploy the project.
 // Special characters, e.g., é, ö, à, etc. are supported in comments.
 
-package unittesting.actions;
+package coco_objecthandling.actions;
 
-import unittesting.TestManager;
+import com.mendix.systemwideinterfaces.core.IMendixObject;
+import coco_objecthandling.ORM;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.webui.CustomJavaAction;
 
-public class FindAllUnitTests extends CustomJavaAction<Boolean>
+/**
+ * Returns true if at least one member (including owned associations) of this object has changed.
+ */
+public class objectHasChanged extends CustomJavaAction<Boolean>
 {
-	public FindAllUnitTests(IContext context)
+	private IMendixObject item;
+
+	public objectHasChanged(IContext context, IMendixObject item)
 	{
 		super(context);
+		this.item = item;
 	}
 
 	@Override
 	public Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		TestManager.instance().findAllTests(getContext());
-		return true;
+		return ORM.objectHasChanged(item);
 		// END USER CODE
 	}
 
@@ -35,7 +41,7 @@ public class FindAllUnitTests extends CustomJavaAction<Boolean>
 	@Override
 	public String toString()
 	{
-		return "FindAllUnitTests";
+		return "objectHasChanged";
 	}
 
 	// BEGIN EXTRA CODE

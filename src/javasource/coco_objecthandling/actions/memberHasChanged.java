@@ -7,25 +7,38 @@
 // Other code you write will be lost the next time you deploy the project.
 // Special characters, e.g., é, ö, à, etc. are supported in comments.
 
-package unittesting.actions;
+package coco_objecthandling.actions;
 
-import unittesting.TestManager;
 import com.mendix.systemwideinterfaces.core.IContext;
+import com.mendix.systemwideinterfaces.core.IMendixObject;
 import com.mendix.webui.CustomJavaAction;
+import coco_objecthandling.ORM;
 
-public class FindAllUnitTests extends CustomJavaAction<Boolean>
+/**
+ * Checks whether a member has changed since the last commit. Useful in combination with getOriginalValueAsString.
+ * 
+ * - item : the object to inspect
+ * - member: the name of the member to inspect. Note that for references, the module name needs to be included.
+ * 
+ * Returns true if changed.
+ */
+public class memberHasChanged extends CustomJavaAction<Boolean>
 {
-	public FindAllUnitTests(IContext context)
+	private IMendixObject item;
+	private String member;
+
+	public memberHasChanged(IContext context, IMendixObject item, String member)
 	{
 		super(context);
+		this.item = item;
+		this.member = member;
 	}
 
 	@Override
 	public Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		TestManager.instance().findAllTests(getContext());
-		return true;
+		return ORM.memberHasChanged(this.getContext(), item, member);
 		// END USER CODE
 	}
 
@@ -35,7 +48,7 @@ public class FindAllUnitTests extends CustomJavaAction<Boolean>
 	@Override
 	public String toString()
 	{
-		return "FindAllUnitTests";
+		return "memberHasChanged";
 	}
 
 	// BEGIN EXTRA CODE

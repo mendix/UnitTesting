@@ -7,15 +7,17 @@
 // Other code you write will be lost the next time you deploy the project.
 // Special characters, e.g., é, ö, à, etc. are supported in comments.
 
-package unittesting.actions;
+package coco_objecthandling.actions;
 
-import unittesting.TestManager;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.webui.CustomJavaAction;
 
-public class FindAllUnitTests extends CustomJavaAction<Boolean>
+/**
+ * Ends the current transaction.
+ */
+public class EndTransaction extends CustomJavaAction<Boolean>
 {
-	public FindAllUnitTests(IContext context)
+	public EndTransaction(IContext context)
 	{
 		super(context);
 	}
@@ -24,7 +26,7 @@ public class FindAllUnitTests extends CustomJavaAction<Boolean>
 	public Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		TestManager.instance().findAllTests(getContext());
+		getContext().endTransaction();
 		return true;
 		// END USER CODE
 	}
@@ -35,7 +37,7 @@ public class FindAllUnitTests extends CustomJavaAction<Boolean>
 	@Override
 	public String toString()
 	{
-		return "FindAllUnitTests";
+		return "EndTransaction";
 	}
 
 	// BEGIN EXTRA CODE

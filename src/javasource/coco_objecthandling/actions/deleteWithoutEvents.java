@@ -7,24 +7,33 @@
 // Other code you write will be lost the next time you deploy the project.
 // Special characters, e.g., é, ö, à, etc. are supported in comments.
 
-package unittesting.actions;
+package coco_objecthandling.actions;
 
-import unittesting.TestManager;
+import com.mendix.core.Core;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.webui.CustomJavaAction;
+import com.mendix.systemwideinterfaces.core.IMendixObject;
 
-public class FindAllUnitTests extends CustomJavaAction<Boolean>
+/**
+ * Deletes the given objects from the database and server cache (synchronously) without events. Thre  current context is used to execute this action.
+ */
+public class deleteWithoutEvents extends CustomJavaAction<Boolean>
 {
-	public FindAllUnitTests(IContext context)
+	private java.util.List<IMendixObject> objectList;
+	private Boolean useDeleteBehavior;
+
+	public deleteWithoutEvents(IContext context, java.util.List<IMendixObject> objectList, Boolean useDeleteBehavior)
 	{
 		super(context);
+		this.objectList = objectList;
+		this.useDeleteBehavior = useDeleteBehavior;
 	}
 
 	@Override
 	public Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		TestManager.instance().findAllTests(getContext());
+		Core.deleteWithoutEvents(this.getContext(), objectList, useDeleteBehavior);
 		return true;
 		// END USER CODE
 	}
@@ -35,7 +44,7 @@ public class FindAllUnitTests extends CustomJavaAction<Boolean>
 	@Override
 	public String toString()
 	{
-		return "FindAllUnitTests";
+		return "deleteWithoutEvents";
 	}
 
 	// BEGIN EXTRA CODE
