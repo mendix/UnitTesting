@@ -4,8 +4,10 @@ UnitTesting
 Module to run Mendix and JUnit unit tests inside a project.
 
 ## Dependencies
-- Community Commons module
+- 'CoCo:ObjectHandling' module
 - junit-4.11.jar
+- org.apache.commons.io-2.3.0.jar
+- org.apache.commons.lang3.jar
 - org.apache.httpcomponents.httpclient_4.4.1.jar
 - org.apache.httpcomponents.httpcore_4.4.1.jar
 
@@ -14,22 +16,25 @@ Module to run Mendix and JUnit unit tests inside a project.
 - Import the module in your project (from the Mendix AppStore or by downloading and exporting the module from this project)
 - Download the latest Community Commons module in your project
 - Map the module role 'TestRunner' to the applicable user roles in your application
-- Add the 'UnitTestOverview' microflow to your navigation structure
+- Add the 'UnitTestOverview' microflow to your navigation structure or include the 'UnitTestOverview' snippet to a custom page.
+- [Optional for including JUnit tests] Set the `UnitTesting.FindJUnitTests` constant to true. (Please take [Project settings regarding Cloud Security](https://docs.mendix.com/mendixcloud/java-in-the-cloud#emulate-cloud-security) and  [Security Constraits in the Mendix Cloud](https://docs.mendix.com/mendixcloud/security-constraints-in-the-mendix-cloud) into consideration)
 - [Optional for remote unit test run API] Add the 'Startup' flow to your models startup sequence
 - [Optional for remote unit test run API] Set the constants `UnitTesting.RemoteApiEnabled` to `true` and provide a password to `UnitTesting.RemoteApiPassword`
 - [Optional for remote unit test run API] When hosting in a cloud node or on premise; open a request handler on the `unittests/` path
 
 ## Usage 
 
-Running unittests is quite trivial. First navigate to the 'Test Suite Overview'. On the top of this form there is an overview of testsuites. A testsuite reflects all unittests that are available in a module of your project. When selecting a testsuite, all unit tests inside the test suite are displayed at the bottom of the screen, including their last result if applicable. 
+Running unittests is quite trivial. First navigate to the 'Test Suite Overview'. On the left side of the page there is an overview of testsuites. A testsuite reflects all unittests that are available in a module of your project. When selecting a testsuite, all unit tests inside the test suite are displayed, including their last result if applicable. 
 
-The `Run all unit tests` button finds and runs all unit tests in the selected test suite. When unit tests are running, the progress will be tracked in the grid below the button. 
+Use the `Refresh` button to have all available unit tests in the project listed.
 
-The `Rerun selected test (class)` runs the unit test currently selected. If a JUnit test class is selected, all tests in the test class are run another time. 
+Use the `Run all` button to run all unit tests or all unit tests in the selected test suite (module). When unit tests are running, the progress will be tracked. 
 
-The `View result` button displays additional details about the unit test result, such as the last step and exception stacktraces. 
+You can also run a test individually. If a JUnit test class is selected, all tests in the test class are run another time. 
 
-As example, try running all unit tests in the UnitTesting module. Those should be available by default. 
+When a unit test has been ran, additional details about the unit test result will appear. E.g. success, failure and exception stacktraces. 
+
+As an example, try running all unit tests in the UnitTesting module. Those are available by default. 
 
 ## Creating Unit Tests
 
