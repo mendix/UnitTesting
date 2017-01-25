@@ -6,11 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-### [Added]
+### Added
 - Added this changelog to the GitHub repository
 - Added jars which were previously provided by adding Community Commons
 - Added dependency with module available Mendix App Store: 'CoCo:ObjectHandling'
 
-### [Removed] 
+### Removed 
 - Dependency with App Store module 'Community Commons'
 
