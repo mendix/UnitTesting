@@ -14,7 +14,7 @@ Module to run Mendix and JUnit unit tests inside a project.
 ## Installation
 
 - Import the module in your project (from the Mendix AppStore or by downloading and exporting the module from this project)
-- Download the latest Community Commons module in your project
+- Download the latest 'CoCo:ObjectHandling' module in your project
 - Map the module role 'TestRunner' to the applicable user roles in your application
 - Add the 'UnitTestOverview' microflow to your navigation structure or include the 'UnitTestOverview' snippet to a custom page.
 - [Optional for including JUnit tests] Set the `UnitTesting.FindJUnitTests` constant to true. (Please take [Project settings regarding Cloud Security](https://docs.mendix.com/mendixcloud/java-in-the-cloud#emulate-cloud-security) and  [Security Constraits in the Mendix Cloud](https://docs.mendix.com/mendixcloud/security-constraints-in-the-mendix-cloud) into consideration)
