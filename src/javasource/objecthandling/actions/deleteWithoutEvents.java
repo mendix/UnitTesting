@@ -7,31 +7,34 @@
 // Other code you write will be lost the next time you deploy the project.
 // Special characters, e.g., é, ö, à, etc. are supported in comments.
 
-package coco_objecthandling.actions;
+package objecthandling.actions;
 
-import com.mendix.systemwideinterfaces.core.IMendixObject;
-import coco_objecthandling.ORM;
+import com.mendix.core.Core;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.webui.CustomJavaAction;
+import com.mendix.systemwideinterfaces.core.IMendixObject;
 
 /**
- * Returns true if at least one member (including owned associations) of this object has changed.
+ * Deletes the given objects from the database and server cache (synchronously) without events. Thre  current context is used to execute this action.
  */
-public class objectHasChanged extends CustomJavaAction<Boolean>
+public class deleteWithoutEvents extends CustomJavaAction<Boolean>
 {
-	private IMendixObject item;
+	private java.util.List<IMendixObject> objectList;
+	private Boolean useDeleteBehavior;
 
-	public objectHasChanged(IContext context, IMendixObject item)
+	public deleteWithoutEvents(IContext context, java.util.List<IMendixObject> objectList, Boolean useDeleteBehavior)
 	{
 		super(context);
-		this.item = item;
+		this.objectList = objectList;
+		this.useDeleteBehavior = useDeleteBehavior;
 	}
 
 	@Override
 	public Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		return ORM.objectHasChanged(item);
+		Core.deleteWithoutEvents(this.getContext(), objectList, useDeleteBehavior);
+		return true;
 		// END USER CODE
 	}
 
@@ -41,7 +44,7 @@ public class objectHasChanged extends CustomJavaAction<Boolean>
 	@Override
 	public String toString()
 	{
-		return "objectHasChanged";
+		return "deleteWithoutEvents";
 	}
 
 	// BEGIN EXTRA CODE

@@ -7,33 +7,32 @@
 // Other code you write will be lost the next time you deploy the project.
 // Special characters, e.g., é, ö, à, etc. are supported in comments.
 
-package coco_objecthandling.actions;
+package objecthandling.actions;
 
+import java.util.ArrayList;
+import java.util.List;
 import com.mendix.systemwideinterfaces.core.IContext;
-import com.mendix.systemwideinterfaces.core.IMendixObject;
 import com.mendix.webui.CustomJavaAction;
-import coco_objecthandling.ORM;
+import com.mendix.systemwideinterfaces.core.IMendixObject;
 
-/**
- * Returns the user that last changed this object as System.User 
- * 
- * (or empty if not applicable).
- */
-public class getLastChangedByUser extends CustomJavaAction<IMendixObject>
+public class createObjectListFromObject extends CustomJavaAction<java.util.List<IMendixObject>>
 {
-	private IMendixObject thing;
+	private IMendixObject inputObject;
 
-	public getLastChangedByUser(IContext context, IMendixObject thing)
+	public createObjectListFromObject(IContext context, IMendixObject inputObject)
 	{
 		super(context);
-		this.thing = thing;
+		this.inputObject = inputObject;
 	}
 
 	@Override
-	public IMendixObject executeAction() throws Exception
+	public java.util.List<IMendixObject> executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		return ORM.getLastChangedByUser(getContext(), thing);
+		List<IMendixObject> objectList = new ArrayList<IMendixObject>();
+		objectList.add(this.inputObject);
+		
+		return objectList;
 		// END USER CODE
 	}
 
@@ -43,7 +42,7 @@ public class getLastChangedByUser extends CustomJavaAction<IMendixObject>
 	@Override
 	public String toString()
 	{
-		return "getLastChangedByUser";
+		return "createObjectListFromObject";
 	}
 
 	// BEGIN EXTRA CODE

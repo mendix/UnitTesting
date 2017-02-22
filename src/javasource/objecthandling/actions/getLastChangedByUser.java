@@ -7,23 +7,23 @@
 // Other code you write will be lost the next time you deploy the project.
 // Special characters, e.g., é, ö, à, etc. are supported in comments.
 
-package coco_objecthandling.actions;
+package objecthandling.actions;
 
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.systemwideinterfaces.core.IMendixObject;
 import com.mendix.webui.CustomJavaAction;
-import coco_objecthandling.ORM;
+import objecthandling.ORM;
 
 /**
- * Returns the user that created the object 
+ * Returns the user that last changed this object as System.User 
  * 
  * (or empty if not applicable).
  */
-public class getCreatedByUser extends CustomJavaAction<IMendixObject>
+public class getLastChangedByUser extends CustomJavaAction<IMendixObject>
 {
 	private IMendixObject thing;
 
-	public getCreatedByUser(IContext context, IMendixObject thing)
+	public getLastChangedByUser(IContext context, IMendixObject thing)
 	{
 		super(context);
 		this.thing = thing;
@@ -33,7 +33,7 @@ public class getCreatedByUser extends CustomJavaAction<IMendixObject>
 	public IMendixObject executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		return ORM.getCreatedByUser(getContext(), thing);
+		return ORM.getLastChangedByUser(getContext(), thing);
 		// END USER CODE
 	}
 
@@ -43,7 +43,7 @@ public class getCreatedByUser extends CustomJavaAction<IMendixObject>
 	@Override
 	public String toString()
 	{
-		return "getCreatedByUser";
+		return "getLastChangedByUser";
 	}
 
 	// BEGIN EXTRA CODE

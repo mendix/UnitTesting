@@ -7,31 +7,36 @@
 // Other code you write will be lost the next time you deploy the project.
 // Special characters, e.g., é, ö, à, etc. are supported in comments.
 
-package coco_objecthandling.actions;
+package objecthandling.actions;
 
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.systemwideinterfaces.core.IMendixObject;
 import com.mendix.webui.CustomJavaAction;
-import coco_objecthandling.XPath;
+import objecthandling.ORM;
 
 /**
- * Removes ALL instances of a certain domain object type using batches.
+ * Copies all common primitive attributes from source to target, which are not necessarily of the same type. This is useful to, for example, translate persistent object into non-persistant (view) objects.
+ * 
+ * Note that no automatic type conversion is done. 
  */
-public class deleteAll extends CustomJavaAction<Boolean>
+public class copyAttributes extends CustomJavaAction<Boolean>
 {
-	private IMendixObject entityType;
+	private IMendixObject source;
+	private IMendixObject target;
 
-	public deleteAll(IContext context, IMendixObject entityType)
+	public copyAttributes(IContext context, IMendixObject source, IMendixObject target)
 	{
 		super(context);
-		this.entityType = entityType;
+		this.source = source;
+		this.target = target;
 	}
 
 	@Override
 	public Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		return XPath.create(this.getContext(), entityType.toString()).deleteAll();
+		ORM.copyAttributes(getContext(), source, target);
+		return true;
 		// END USER CODE
 	}
 
@@ -41,7 +46,7 @@ public class deleteAll extends CustomJavaAction<Boolean>
 	@Override
 	public String toString()
 	{
-		return "deleteAll";
+		return "copyAttributes";
 	}
 
 	// BEGIN EXTRA CODE

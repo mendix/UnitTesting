@@ -7,32 +7,31 @@
 // Other code you write will be lost the next time you deploy the project.
 // Special characters, e.g., é, ö, à, etc. are supported in comments.
 
-package coco_objecthandling.actions;
+package objecthandling.actions;
 
-import java.util.ArrayList;
-import java.util.List;
 import com.mendix.systemwideinterfaces.core.IContext;
-import com.mendix.webui.CustomJavaAction;
 import com.mendix.systemwideinterfaces.core.IMendixObject;
+import com.mendix.webui.CustomJavaAction;
+import objecthandling.XPath;
 
-public class createObjectListFromObject extends CustomJavaAction<java.util.List<IMendixObject>>
+/**
+ * Removes ALL instances of a certain domain object type using batches.
+ */
+public class deleteAll extends CustomJavaAction<Boolean>
 {
-	private IMendixObject inputObject;
+	private IMendixObject entityType;
 
-	public createObjectListFromObject(IContext context, IMendixObject inputObject)
+	public deleteAll(IContext context, IMendixObject entityType)
 	{
 		super(context);
-		this.inputObject = inputObject;
+		this.entityType = entityType;
 	}
 
 	@Override
-	public java.util.List<IMendixObject> executeAction() throws Exception
+	public Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		List<IMendixObject> objectList = new ArrayList<IMendixObject>();
-		objectList.add(this.inputObject);
-		
-		return objectList;
+		return XPath.create(this.getContext(), entityType.toString()).deleteAll();
 		// END USER CODE
 	}
 
@@ -42,7 +41,7 @@ public class createObjectListFromObject extends CustomJavaAction<java.util.List<
 	@Override
 	public String toString()
 	{
-		return "createObjectListFromObject";
+		return "deleteAll";
 	}
 
 	// BEGIN EXTRA CODE

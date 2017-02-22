@@ -7,32 +7,31 @@
 // Other code you write will be lost the next time you deploy the project.
 // Special characters, e.g., é, ö, à, etc. are supported in comments.
 
-package coco_objecthandling.actions;
+package objecthandling.actions;
 
-import com.mendix.systemwideinterfaces.core.IMendixObject;
 import com.mendix.systemwideinterfaces.core.IContext;
+import com.mendix.systemwideinterfaces.core.IMendixObject;
 import com.mendix.webui.CustomJavaAction;
+import objecthandling.ORM;
 
 /**
- * Returns the actual type of an Entity. Useful as alternative way to split upon inheritance, or as input of other functions in this module.
+ * returns the Global Unique Identifier (GUID, or id) of an object.
  */
-public class getTypeAsString extends CustomJavaAction<String>
+public class getGUID extends CustomJavaAction<Long>
 {
-	private IMendixObject instance;
+	private IMendixObject item;
 
-	public getTypeAsString(IContext context, IMendixObject instance)
+	public getGUID(IContext context, IMendixObject item)
 	{
 		super(context);
-		this.instance = instance;
+		this.item = item;
 	}
 
 	@Override
-	public String executeAction() throws Exception
+	public Long executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		if (instance == null)
-			return "";
-		return instance.getType();
+		return ORM.getGUID(item);
 		// END USER CODE
 	}
 
@@ -42,7 +41,7 @@ public class getTypeAsString extends CustomJavaAction<String>
 	@Override
 	public String toString()
 	{
-		return "getTypeAsString";
+		return "getGUID";
 	}
 
 	// BEGIN EXTRA CODE

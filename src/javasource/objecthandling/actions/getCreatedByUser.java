@@ -7,34 +7,33 @@
 // Other code you write will be lost the next time you deploy the project.
 // Special characters, e.g., é, ö, à, etc. are supported in comments.
 
-package coco_objecthandling.actions;
+package objecthandling.actions;
 
-import com.mendix.core.Core;
 import com.mendix.systemwideinterfaces.core.IContext;
-import com.mendix.webui.CustomJavaAction;
 import com.mendix.systemwideinterfaces.core.IMendixObject;
+import com.mendix.webui.CustomJavaAction;
+import objecthandling.ORM;
 
 /**
- * Deletes the given objects from the database and server cache (synchronously) without events. Thre  current context is used to execute this action.
+ * Returns the user that created the object 
+ * 
+ * (or empty if not applicable).
  */
-public class deleteWithoutEvents extends CustomJavaAction<Boolean>
+public class getCreatedByUser extends CustomJavaAction<IMendixObject>
 {
-	private java.util.List<IMendixObject> objectList;
-	private Boolean useDeleteBehavior;
+	private IMendixObject thing;
 
-	public deleteWithoutEvents(IContext context, java.util.List<IMendixObject> objectList, Boolean useDeleteBehavior)
+	public getCreatedByUser(IContext context, IMendixObject thing)
 	{
 		super(context);
-		this.objectList = objectList;
-		this.useDeleteBehavior = useDeleteBehavior;
+		this.thing = thing;
 	}
 
 	@Override
-	public Boolean executeAction() throws Exception
+	public IMendixObject executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		Core.deleteWithoutEvents(this.getContext(), objectList, useDeleteBehavior);
-		return true;
+		return ORM.getCreatedByUser(getContext(), thing);
 		// END USER CODE
 	}
 
@@ -44,7 +43,7 @@ public class deleteWithoutEvents extends CustomJavaAction<Boolean>
 	@Override
 	public String toString()
 	{
-		return "deleteWithoutEvents";
+		return "getCreatedByUser";
 	}
 
 	// BEGIN EXTRA CODE

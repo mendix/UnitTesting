@@ -7,35 +7,35 @@
 // Other code you write will be lost the next time you deploy the project.
 // Special characters, e.g., é, ö, à, etc. are supported in comments.
 
-package coco_objecthandling.actions;
+package objecthandling.actions;
 
+import com.mendix.core.Core;
 import com.mendix.systemwideinterfaces.core.IContext;
-import com.mendix.systemwideinterfaces.core.IMendixObject;
+import com.mendix.systemwideinterfaces.core.ISession;
 import com.mendix.webui.CustomJavaAction;
-import coco_objecthandling.ORM;
+import com.mendix.systemwideinterfaces.core.IMendixObject;
 
 /**
- * Copies all common primitive attributes from source to target, which are not necessarily of the same type. This is useful to, for example, translate persistent object into non-persistant (view) objects.
- * 
- * Note that no automatic type conversion is done. 
+ * This function commits an object in a new context and transaction, making sure it gets persisted in the database (regarding which exception happens after invocation).
  */
-public class copyAttributes extends CustomJavaAction<Boolean>
+public class commitInSeparateDatabaseTransaction extends CustomJavaAction<Boolean>
 {
-	private IMendixObject source;
-	private IMendixObject target;
+	private IMendixObject mxObject;
 
-	public copyAttributes(IContext context, IMendixObject source, IMendixObject target)
+	public commitInSeparateDatabaseTransaction(IContext context, IMendixObject mxObject)
 	{
 		super(context);
-		this.source = source;
-		this.target = target;
+		this.mxObject = mxObject;
 	}
 
 	@Override
 	public Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		ORM.copyAttributes(getContext(), source, target);
+		ISession session = getContext().getSession();
+		IContext newContext = session.createContext();
+		Core.commit(newContext, mxObject);
+		newContext.endTransaction();
 		return true;
 		// END USER CODE
 	}
@@ -46,7 +46,7 @@ public class copyAttributes extends CustomJavaAction<Boolean>
 	@Override
 	public String toString()
 	{
-		return "copyAttributes";
+		return "commitInSeparateDatabaseTransaction";
 	}
 
 	// BEGIN EXTRA CODE

@@ -7,27 +7,32 @@
 // Other code you write will be lost the next time you deploy the project.
 // Special characters, e.g., é, ö, à, etc. are supported in comments.
 
-package coco_objecthandling.actions;
+package objecthandling.actions;
 
+import com.mendix.systemwideinterfaces.core.IMendixObject;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.webui.CustomJavaAction;
 
 /**
- * Starts a new transaction.
+ * Returns the actual type of an Entity. Useful as alternative way to split upon inheritance, or as input of other functions in this module.
  */
-public class StartTransaction extends CustomJavaAction<Boolean>
+public class getTypeAsString extends CustomJavaAction<String>
 {
-	public StartTransaction(IContext context)
+	private IMendixObject instance;
+
+	public getTypeAsString(IContext context, IMendixObject instance)
 	{
 		super(context);
+		this.instance = instance;
 	}
 
 	@Override
-	public Boolean executeAction() throws Exception
+	public String executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		getContext().startTransaction();
-		return true;
+		if (instance == null)
+			return "";
+		return instance.getType();
 		// END USER CODE
 	}
 
@@ -37,7 +42,7 @@ public class StartTransaction extends CustomJavaAction<Boolean>
 	@Override
 	public String toString()
 	{
-		return "StartTransaction";
+		return "getTypeAsString";
 	}
 
 	// BEGIN EXTRA CODE

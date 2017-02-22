@@ -7,36 +7,38 @@
 // Other code you write will be lost the next time you deploy the project.
 // Special characters, e.g., é, ö, à, etc. are supported in comments.
 
-package coco_objecthandling.actions;
+package objecthandling.actions;
 
-import com.mendix.core.Core;
 import com.mendix.systemwideinterfaces.core.IContext;
-import com.mendix.systemwideinterfaces.core.ISession;
-import com.mendix.webui.CustomJavaAction;
 import com.mendix.systemwideinterfaces.core.IMendixObject;
+import com.mendix.webui.CustomJavaAction;
+import objecthandling.ORM;
 
 /**
- * This function commits an object in a new context and transaction, making sure it gets persisted in the database (regarding which exception happens after invocation).
+ * Checks whether a member has changed since the last commit. Useful in combination with getOriginalValueAsString.
+ * 
+ * - item : the object to inspect
+ * - member: the name of the member to inspect. Note that for references, the module name needs to be included.
+ * 
+ * Returns true if changed.
  */
-public class commitInSeparateDatabaseTransaction extends CustomJavaAction<Boolean>
+public class memberHasChanged extends CustomJavaAction<Boolean>
 {
-	private IMendixObject mxObject;
+	private IMendixObject item;
+	private String member;
 
-	public commitInSeparateDatabaseTransaction(IContext context, IMendixObject mxObject)
+	public memberHasChanged(IContext context, IMendixObject item, String member)
 	{
 		super(context);
-		this.mxObject = mxObject;
+		this.item = item;
+		this.member = member;
 	}
 
 	@Override
 	public Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		ISession session = getContext().getSession();
-		IContext newContext = session.createContext();
-		Core.commit(newContext, mxObject);
-		newContext.endTransaction();
-		return true;
+		return ORM.memberHasChanged(this.getContext(), item, member);
 		// END USER CODE
 	}
 
@@ -46,7 +48,7 @@ public class commitInSeparateDatabaseTransaction extends CustomJavaAction<Boolea
 	@Override
 	public String toString()
 	{
-		return "commitInSeparateDatabaseTransaction";
+		return "memberHasChanged";
 	}
 
 	// BEGIN EXTRA CODE

@@ -7,31 +7,27 @@
 // Other code you write will be lost the next time you deploy the project.
 // Special characters, e.g., é, ö, à, etc. are supported in comments.
 
-package coco_objecthandling.actions;
+package objecthandling.actions;
 
 import com.mendix.systemwideinterfaces.core.IContext;
-import com.mendix.systemwideinterfaces.core.IMendixObject;
 import com.mendix.webui.CustomJavaAction;
-import coco_objecthandling.ORM;
 
 /**
- * returns the Global Unique Identifier (GUID, or id) of an object.
+ * Ends the current transaction.
  */
-public class getGUID extends CustomJavaAction<Long>
+public class EndTransaction extends CustomJavaAction<Boolean>
 {
-	private IMendixObject item;
-
-	public getGUID(IContext context, IMendixObject item)
+	public EndTransaction(IContext context)
 	{
 		super(context);
-		this.item = item;
 	}
 
 	@Override
-	public Long executeAction() throws Exception
+	public Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		return ORM.getGUID(item);
+		getContext().endTransaction();
+		return true;
 		// END USER CODE
 	}
 
@@ -41,7 +37,7 @@ public class getGUID extends CustomJavaAction<Long>
 	@Override
 	public String toString()
 	{
-		return "getGUID";
+		return "EndTransaction";
 	}
 
 	// BEGIN EXTRA CODE

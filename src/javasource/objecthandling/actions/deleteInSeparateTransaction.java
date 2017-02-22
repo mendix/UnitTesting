@@ -7,26 +7,35 @@
 // Other code you write will be lost the next time you deploy the project.
 // Special characters, e.g., é, ö, à, etc. are supported in comments.
 
-package coco_objecthandling.actions;
+package objecthandling.actions;
 
+import com.mendix.core.Core;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.webui.CustomJavaAction;
+import com.mendix.systemwideinterfaces.core.IMendixObject;
+import com.mendix.systemwideinterfaces.core.ISession;
 
 /**
- * Ends the current transaction.
+ * This function deletes a list of objects in a new context and transaction, making sure it gets deleted from the database (regarding which exception happens after invocation).
  */
-public class EndTransaction extends CustomJavaAction<Boolean>
+public class deleteInSeparateTransaction extends CustomJavaAction<Boolean>
 {
-	public EndTransaction(IContext context)
+	private java.util.List<IMendixObject> objectList;
+
+	public deleteInSeparateTransaction(IContext context, java.util.List<IMendixObject> objectList)
 	{
 		super(context);
+		this.objectList = objectList;
 	}
 
 	@Override
 	public Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
-		getContext().endTransaction();
+		ISession session = getContext().getSession();
+		IContext newContext = session.createContext();
+		Core.delete(newContext, objectList);
+		newContext.endTransaction();
 		return true;
 		// END USER CODE
 	}
@@ -37,7 +46,7 @@ public class EndTransaction extends CustomJavaAction<Boolean>
 	@Override
 	public String toString()
 	{
-		return "EndTransaction";
+		return "deleteInSeparateTransaction";
 	}
 
 	// BEGIN EXTRA CODE

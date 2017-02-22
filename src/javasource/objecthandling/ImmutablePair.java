@@ -1,4 +1,4 @@
-package coco_objecthandling;
+package objecthandling;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 

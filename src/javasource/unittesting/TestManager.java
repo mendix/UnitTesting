@@ -31,7 +31,7 @@ import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.systemwideinterfaces.core.IDataType;
 import com.mendix.systemwideinterfaces.core.IMendixObject;
 
-import coco_objecthandling.XPath;
+import objecthandling.XPath;
 import unittesting.proxies.TestSuite;
 import unittesting.proxies.UnitTest;
 import unittesting.proxies.UnitTestResult;
@@ -57,8 +57,6 @@ public class TestManager
 		}
 	}
 
-
-	private static final String	TEST_MICROFLOW_PREFIX_1	= "Test_";
 	private static final String	TEST_MICROFLOW_PREFIX_2	= "UT_";
 
 	static final String	CLOUD_SECURITY_ERROR = "Unable to find JUnit test classes or methods. \n\n";
@@ -254,8 +252,16 @@ public class TestManager
 	{
 		List<String> mfnames = new ArrayList<String>();
 
-		String basename1 = (testRun.getModule() + "." + TEST_MICROFLOW_PREFIX_1).toLowerCase();
-		String basename2 = (testRun.getModule() + "." + TEST_MICROFLOW_PREFIX_2).toLowerCase();
+		if(testRun.getPrefix1() == null) {
+			testRun.setPrefix1("Test_");
+		}
+		if(testRun.getPrefix2() == null) {
+			testRun.setPrefix2("UT_");
+		}
+			
+		
+		String basename1 = (testRun.getModule() + "." + testRun.getPrefix1()).toLowerCase();
+		String basename2 = (testRun.getModule() + "." + testRun.getPrefix2()).toLowerCase();
 		
 		//Find microflownames
 		for (String mf : Core.getMicroflowNames()) 
