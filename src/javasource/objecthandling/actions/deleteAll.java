@@ -17,7 +17,7 @@ import objecthandling.XPath;
 /**
  * Removes ALL instances of a certain domain object type using batches.
  */
-public class deleteAll extends CustomJavaAction<Boolean>
+public class deleteAll extends CustomJavaAction<java.lang.Boolean>
 {
 	private IMendixObject entityType;
 
@@ -28,7 +28,7 @@ public class deleteAll extends CustomJavaAction<Boolean>
 	}
 
 	@Override
-	public Boolean executeAction() throws Exception
+	public java.lang.Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
 		return XPath.create(this.getContext(), entityType.toString()).deleteAll();
@@ -39,7 +39,7 @@ public class deleteAll extends CustomJavaAction<Boolean>
 	 * Returns a string representation of this action
 	 */
 	@Override
-	public String toString()
+	public java.lang.String toString()
 	{
 		return "deleteAll";
 	}

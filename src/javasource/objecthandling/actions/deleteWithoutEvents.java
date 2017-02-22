@@ -17,12 +17,12 @@ import com.mendix.systemwideinterfaces.core.IMendixObject;
 /**
  * Deletes the given objects from the database and server cache (synchronously) without events. Thre  current context is used to execute this action.
  */
-public class deleteWithoutEvents extends CustomJavaAction<Boolean>
+public class deleteWithoutEvents extends CustomJavaAction<java.lang.Boolean>
 {
 	private java.util.List<IMendixObject> objectList;
-	private Boolean useDeleteBehavior;
+	private java.lang.Boolean useDeleteBehavior;
 
-	public deleteWithoutEvents(IContext context, java.util.List<IMendixObject> objectList, Boolean useDeleteBehavior)
+	public deleteWithoutEvents(IContext context, java.util.List<IMendixObject> objectList, java.lang.Boolean useDeleteBehavior)
 	{
 		super(context);
 		this.objectList = objectList;
@@ -30,7 +30,7 @@ public class deleteWithoutEvents extends CustomJavaAction<Boolean>
 	}
 
 	@Override
-	public Boolean executeAction() throws Exception
+	public java.lang.Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
 		Core.deleteWithoutEvents(this.getContext(), objectList, useDeleteBehavior);
@@ -42,7 +42,7 @@ public class deleteWithoutEvents extends CustomJavaAction<Boolean>
 	 * Returns a string representation of this action
 	 */
 	@Override
-	public String toString()
+	public java.lang.String toString()
 	{
 		return "deleteWithoutEvents";
 	}

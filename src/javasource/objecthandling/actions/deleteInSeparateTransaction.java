@@ -18,7 +18,7 @@ import com.mendix.systemwideinterfaces.core.ISession;
 /**
  * This function deletes a list of objects in a new context and transaction, making sure it gets deleted from the database (regarding which exception happens after invocation).
  */
-public class deleteInSeparateTransaction extends CustomJavaAction<Boolean>
+public class deleteInSeparateTransaction extends CustomJavaAction<java.lang.Boolean>
 {
 	private java.util.List<IMendixObject> objectList;
 
@@ -29,7 +29,7 @@ public class deleteInSeparateTransaction extends CustomJavaAction<Boolean>
 	}
 
 	@Override
-	public Boolean executeAction() throws Exception
+	public java.lang.Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
 		ISession session = getContext().getSession();
@@ -44,7 +44,7 @@ public class deleteInSeparateTransaction extends CustomJavaAction<Boolean>
 	 * Returns a string representation of this action
 	 */
 	@Override
-	public String toString()
+	public java.lang.String toString()
 	{
 		return "deleteInSeparateTransaction";
 	}

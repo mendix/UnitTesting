@@ -40,7 +40,7 @@ public class createObjectListFromObject extends CustomJavaAction<java.util.List<
 	 * Returns a string representation of this action
 	 */
 	@Override
-	public String toString()
+	public java.lang.String toString()
 	{
 		return "createObjectListFromObject";
 	}

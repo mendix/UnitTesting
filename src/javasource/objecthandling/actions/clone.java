@@ -23,13 +23,13 @@ import objecthandling.ORM;
  * 
  * If associated objects need to be cloned as well, use deepClone, this function only copies the references, not the reffered objects. Target is not committed automatically.
  */
-public class clone extends CustomJavaAction<Boolean>
+public class clone extends CustomJavaAction<java.lang.Boolean>
 {
 	private IMendixObject source;
 	private IMendixObject target;
-	private Boolean withAssociations;
+	private java.lang.Boolean withAssociations;
 
-	public clone(IContext context, IMendixObject source, IMendixObject target, Boolean withAssociations)
+	public clone(IContext context, IMendixObject source, IMendixObject target, java.lang.Boolean withAssociations)
 	{
 		super(context);
 		this.source = source;
@@ -38,7 +38,7 @@ public class clone extends CustomJavaAction<Boolean>
 	}
 
 	@Override
-	public Boolean executeAction() throws Exception
+	public java.lang.Boolean executeAction() throws Exception
 	{
 		// BEGIN USER CODE
 		return ORM.cloneObject(this.getContext(), source, target, withAssociations);
@@ -49,7 +49,7 @@ public class clone extends CustomJavaAction<Boolean>
 	 * Returns a string representation of this action
 	 */
 	@Override
-	public String toString()
+	public java.lang.String toString()
 	{
 		return "clone";
 	}
