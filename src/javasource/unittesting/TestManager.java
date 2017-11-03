@@ -57,8 +57,6 @@ public class TestManager
 		}
 	}
 
-	private static final String	TEST_MICROFLOW_PREFIX_2	= "UT_";
-
 	static final String	CLOUD_SECURITY_ERROR = "Unable to find JUnit test classes or methods. \n\n";
 	
 	private static TestManager	instance;
@@ -66,6 +64,8 @@ public class TestManager
 	
 	private static final Map<String, Object> emptyArguments = new HashMap<String, Object>();
 	private static final Map<String, Class<?>[]> classCache = new HashMap<String, Class<?>[]>();
+	
+	private IContext setupContext;
 
 	private String	lastStep;
 	
@@ -127,7 +127,10 @@ public class TestManager
 		if (Core.getMicroflowNames().contains(testSuite.getModule() + ".Setup")) {
 			try {
 				LOG.info("Running Setup microflow..");
-				Core.execute(Core.createSystemContext(), testSuite.getModule() + ".Setup", emptyArguments);
+				if (testSuite.getAutoRollbackMFs())
+					setupContext = Core.createSystemContext();
+					setupContext.startTransaction();;
+					Core.execute(setupContext, testSuite.getModule() + ".Setup", emptyArguments);
 			}
 			catch(Exception e) {
 				LOG.error("Exception during SetUp microflow: " + e.getMessage(), e);
@@ -138,16 +141,28 @@ public class TestManager
 
 	private void runMfTearDown(TestSuite testSuite) 
 	{
+		if (testSuite.getAutoRollbackMFs() && Core.getMicroflowNames().contains(testSuite.getModule() + ".Setup") && !Core.getMicroflowNames().contains(testSuite.getModule() + ".TearDown"))
+			setupContext.rollbackTransAction();
+		
 		if (Core.getMicroflowNames().contains(testSuite.getModule() + ".TearDown")) {
 			try
 			{
 				LOG.info("Running TearDown microflow..");
-				Core.execute(Core.createSystemContext(), testSuite.getModule() + ".TearDown", emptyArguments);
+				if (testSuite.getAutoRollbackMFs() && Core.getMicroflowNames().contains(testSuite.getModule() + ".Setup")) {
+					Core.execute(setupContext, testSuite.getModule() + ".TearDown", emptyArguments);
+				} else {
+					Core.execute(Core.createSystemContext(), testSuite.getModule() + ".TearDown", emptyArguments);
+				}
 			}
 			catch (Exception e)
 			{
 				LOG.error("Severe: exception in unittest TearDown microflow '" + testSuite.getModule() + ".Setup': " +e.getMessage(), e);
 				throw new RuntimeException(e);
+			}
+			finally {
+				if (testSuite.getAutoRollbackMFs() && Core.getMicroflowNames().contains(testSuite.getModule() + ".Setup")) {
+					setupContext.rollbackTransAction();
+				}
 			}
 		}
 	}
@@ -313,9 +328,15 @@ public class TestManager
 
 		commitSilent(test);
 
-		IContext mfContext = Core.createSystemContext();
-		if (testSuite.getAutoRollbackMFs())
+		IContext mfContext = null;
+		
+		if (testSuite.getAutoRollbackMFs() && Core.getMicroflowNames().contains(testSuite.getModule() + ".Setup")) {
+			mfContext = setupContext.clone();
 			mfContext.startTransaction();
+		} else {
+			mfContext = Core.createSystemContext();
+		}
+		
 
 		long start = System.currentTimeMillis();
 
@@ -424,7 +445,6 @@ public class TestManager
 		
 		ZipFile zipFile = new ZipFile(projectJar);
 		Enumeration<? extends ZipEntry> entries = zipFile.entries();
-		System.out.println("Starting processProjec");
 		while(entries.hasMoreElements()){
 			ZipEntry zipEntry = entries.nextElement();
 			String fileName = zipEntry.getName();
@@ -600,5 +620,4 @@ public class TestManager
 		//MWE: this system is problematic weird if used from multiple simultanously used threads..
 		return lastStep;
 	}
-	
 }
