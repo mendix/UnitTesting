@@ -355,6 +355,8 @@ public class TestManager
 			return res;
 		}
 		catch(Exception e) {
+			if (testSuite.getAutoRollbackMFs())
+				mfContext.startTransaction();
 			start = System.currentTimeMillis() - start;
 			test.setResult(UnitTestResult._2_Failed);
 			Throwable cause = ExceptionUtils.getRootCause(e);
@@ -368,7 +370,6 @@ public class TestManager
 		finally {
 			if (testSuite.getAutoRollbackMFs())
 				mfContext.rollbackTransAction();
-				
 			test.setLastStep(lastStep);
 			test.setReadableTime((start > 10000 ? Math.round(start / 1000) + " seconds" : start + " milliseconds"));
 			commitSilent(test);
