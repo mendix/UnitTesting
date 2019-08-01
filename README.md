@@ -17,7 +17,7 @@ Module to run Mendix and JUnit unit tests inside a project.
 - Download the latest 'ObjectHandling' module in your project
 - Map the module role 'TestRunner' to the applicable user roles in your application
 - Add the 'UnitTestOverview' microflow to your navigation structure or include the 'UnitTestOverview' snippet to a custom page.
-- [Optional for including JUnit tests] Set the `UnitTesting.FindJUnitTests` constant to true. (Please take [Project settings regarding Cloud Security](https://docs.mendix.com/mendixcloud/java-in-the-cloud#emulate-cloud-security) and  [Security Constraits in the Mendix Cloud](https://docs.mendix.com/mendixcloud/security-constraints-in-the-mendix-cloud) into consideration)
+- [Optional for including JUnit tests] Set the `UnitTesting.FindJUnitTests` constant to true. (Please take [Project settings regarding Cloud Security](https://docs.mendix.com/developerportal/deploy/java-in-the-cloud#emulate-cloud-security) into consideration)
 - [Optional for remote unit test run API] Add the 'Startup' flow to your models startup sequence
 - [Optional for remote unit test run API] Set the constants `UnitTesting.RemoteApiEnabled` to `true` and provide a password to `UnitTesting.RemoteApiPassword`
 - [Optional for remote unit test run API] When hosting in a cloud node or on premise; open a request handler on the `unittests/` path
