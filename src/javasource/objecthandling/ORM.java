@@ -32,8 +32,6 @@ import com.mendix.systemwideinterfaces.core.meta.IMetaPrimitive.PrimitiveType;
 public class ORM
 {
 
-
-
 	public static Long getGUID(IMendixObject item)
 	{
 		return item.getId().toLong();
@@ -275,17 +273,6 @@ public class ORM
 		}
 		return true;
 	}
-
-	public static IMendixObject firstWhere(IContext c, String entityName,
-			Object member, String value) throws CoreException
-	{
-		List<IMendixObject> items = Core.retrieveXPathQuery(c, String.format("//%s[%s =  '%s']", entityName, member, value), 1, 0, new HashMap<String, String>());
-		if (items == null || items.size() == 0)
-			return null;
-		return items.get(0);
-	}
-
-
 
 	public static IMendixObject getLastChangedByUser(IContext context,
 			IMendixObject thing) throws CoreException
