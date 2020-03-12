@@ -127,10 +127,13 @@ public class TestManager
 		if (Core.getMicroflowNames().contains(testSuite.getModule() + ".Setup")) {
 			try {
 				LOG.info("Running Setup microflow..");
-				if (testSuite.getAutoRollbackMFs())
+				if (testSuite.getAutoRollbackMFs()) {
 					setupContext = Core.createSystemContext();
-					setupContext.startTransaction();;
+					setupContext.startTransaction();
 					Core.execute(setupContext, testSuite.getModule() + ".Setup", emptyArguments);
+				} else {
+					Core.execute(Core.createSystemContext(), testSuite.getModule() + ".Setup", emptyArguments);
+				}
 			}
 			catch(Exception e) {
 				LOG.error("Exception during SetUp microflow: " + e.getMessage(), e);
