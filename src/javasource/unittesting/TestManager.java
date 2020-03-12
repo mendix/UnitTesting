@@ -144,29 +144,32 @@ public class TestManager
 
 	private void runMfTearDown(TestSuite testSuite) 
 	{
-		if (testSuite.getAutoRollbackMFs() && Core.getMicroflowNames().contains(testSuite.getModule() + ".Setup") && !Core.getMicroflowNames().contains(testSuite.getModule() + ".TearDown"))
-			setupContext.rollbackTransAction();
-		
+		IContext tearDownContext = null;
 		if (Core.getMicroflowNames().contains(testSuite.getModule() + ".TearDown")) {
 			try
 			{
 				LOG.info("Running TearDown microflow..");
-				if (testSuite.getAutoRollbackMFs() && Core.getMicroflowNames().contains(testSuite.getModule() + ".Setup")) {
-					Core.execute(setupContext, testSuite.getModule() + ".TearDown", emptyArguments);
+				if (testSuite.getAutoRollbackMFs()) {
+					if (Core.getMicroflowNames().contains(testSuite.getModule() + ".Setup")) {
+						tearDownContext = setupContext;
+					} else {
+						tearDownContext = Core.createSystemContext();
+						tearDownContext.startTransaction();
+					}
+					Core.execute(tearDownContext, testSuite.getModule() + ".TearDown", emptyArguments);
 				} else {
 					Core.execute(Core.createSystemContext(), testSuite.getModule() + ".TearDown", emptyArguments);
 				}
 			}
 			catch (Exception e)
 			{
-				LOG.error("Severe: exception in unittest TearDown microflow '" + testSuite.getModule() + ".Setup': " +e.getMessage(), e);
+				LOG.error("Severe: exception in unittest TearDown microflow '" + testSuite.getModule() + ".TearDown': " +e.getMessage(), e);
 				throw new RuntimeException(e);
 			}
-			finally {
-				if (testSuite.getAutoRollbackMFs() && Core.getMicroflowNames().contains(testSuite.getModule() + ".Setup")) {
-					setupContext.rollbackTransAction();
-				}
-			}
+		}
+		
+		if (testSuite.getAutoRollbackMFs()) {
+			tearDownContext.rollbackTransAction();
 		}
 	}
 	
@@ -333,8 +336,11 @@ public class TestManager
 
 		IContext mfContext = null;
 		
-		if (testSuite.getAutoRollbackMFs() && Core.getMicroflowNames().contains(testSuite.getModule() + ".Setup")) {
-			mfContext = setupContext.clone();
+		if (testSuite.getAutoRollbackMFs()) {
+			if (Core.getMicroflowNames().contains(testSuite.getModule() + ".Setup"))
+				mfContext = setupContext.clone();
+			else
+				mfContext = Core.createSystemContext();
 			mfContext.startTransaction();
 		} else {
 			mfContext = Core.createSystemContext();
