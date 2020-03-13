@@ -149,7 +149,7 @@ public class TestManager
 			try
 			{
 				LOG.info("Running TearDown microflow..");
-				if (!Core.getMicroflowNames().contains(testSuite.getModule() + ".Setup")) {
+				if (tearDownContext == null) {
 					tearDownContext = Core.createSystemContext();
 				}
 				if (testSuite.getAutoRollbackMFs()) {
