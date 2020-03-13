@@ -144,22 +144,18 @@ public class TestManager
 
 	private void runMfTearDown(TestSuite testSuite) 
 	{
-		IContext tearDownContext = null;
+		IContext tearDownContext = setupContext;
 		if (Core.getMicroflowNames().contains(testSuite.getModule() + ".TearDown")) {
 			try
 			{
 				LOG.info("Running TearDown microflow..");
-				if (testSuite.getAutoRollbackMFs()) {
-					if (Core.getMicroflowNames().contains(testSuite.getModule() + ".Setup")) {
-						tearDownContext = setupContext;
-					} else {
-						tearDownContext = Core.createSystemContext();
-						tearDownContext.startTransaction();
-					}
-					Core.execute(tearDownContext, testSuite.getModule() + ".TearDown", emptyArguments);
-				} else {
-					Core.execute(Core.createSystemContext(), testSuite.getModule() + ".TearDown", emptyArguments);
+				if (tearDownContext == null) {
+					tearDownContext = Core.createSystemContext();
 				}
+				if (testSuite.getAutoRollbackMFs()) {
+					tearDownContext.startTransaction();
+				}
+				Core.execute(tearDownContext, testSuite.getModule() + ".TearDown", emptyArguments);
 			}
 			catch (Exception e)
 			{
@@ -168,9 +164,13 @@ public class TestManager
 			}
 		}
 		
-		if (testSuite.getAutoRollbackMFs()) {
+		// Either we had a teardown a teardown or 
+		if (testSuite.getAutoRollbackMFs() && tearDownContext != null) {
 			tearDownContext.rollbackTransAction();
 		}
+		
+		// Make sure we clean setupContext after running this test/suite
+		setupContext = null;
 	}
 	
 	public synchronized void runTestSuites() throws CoreException {
