@@ -112,13 +112,19 @@ public class TestManager
 		 * Is java
 		 */
 		else {
-
-			Class<?> test = Class.forName(unitTest.getName().split("/")[0]);
+			String[] parts = unitTest.getName().split("/");
+			Request request;
+			if (parts.length == 1) // class-scale test run
+				request = Request.aClass(Class.forName(parts[0]));
+			else if (parts.length == 2) // method-scale test run
+				request = Request.method(Class.forName(parts[0]), parts[1]);
+			else
+				throw new CoreException("Invalid test specification: " + unitTest.getName() + "\nTest method run should be defined in either form $testClass or $testClass/$testMethod.");
 
 			JUnitCore junit = new JUnitCore();
 			junit.addListener(new UnitTestRunListener(context, testSuite));
 
-			junit.run(test);
+			junit.run(request);
 		}
 	}
 
