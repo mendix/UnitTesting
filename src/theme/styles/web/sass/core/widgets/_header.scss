@@ -106,7 +106,7 @@
 }
 
 // RTL support
-body[dir='rtl'] {
+body[dir="rtl"] {
     .mx-header-left {
         order: 3;
     }

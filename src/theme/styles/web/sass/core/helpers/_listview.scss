@@ -38,8 +38,7 @@
 .listview-seperated.mx-listview {
     & > ul > li {
         margin-bottom: $gutter-size;
-        border-width: 1px;
-        border-style: solid;
+        border: 1px solid $grid-border-color;
         border-radius: $border-radius-default;
     }
 }
@@ -47,9 +46,9 @@
 // Remove all styling
 .listview-stylingless.mx-listview {
     & > ul > li {
-        padding: 0;
+        padding: unset;
         cursor: default;
-        border: 0;
+        border: unset;
         background-color: transparent;
 
         &:hover,
@@ -73,6 +72,8 @@
 // Hover style activated
 .listview-hover.mx-listview {
     & > ul > li {
+        cursor: pointer;
+
         &:hover,
         &:focus,
         &:active {
@@ -103,7 +104,7 @@
 }
 
 // Bootstrap columns
-.mx-listview[class*='lv-col'] {
+.mx-listview[class*="lv-col"] {
     overflow: hidden; // For if it is not in a layout, to prevent scrollbars
     & > ul {
         display: block; // normal a table
@@ -115,7 +116,7 @@
             // clearfix
             display: table;
             clear: both;
-            content: ' ';
+            content: " ";
         }
 
         & > li {
@@ -127,7 +128,7 @@
             padding-right: $gutter-size;
             padding-left: $gutter-size;
             border: 0;
-            @media (max-width: $screen-sm-max) {
+            @media (max-width: $screen-md-max) {
                 width: 100% !important;
             }
 
@@ -185,7 +186,7 @@
         width: 8.33333333% !important;
     }
 
-    @media (min-width: $screen-sm) {
+    @media (min-width: $screen-md) {
         &.lv-col-sm-12 > ul > li {
             width: 100% !important;
         }
@@ -223,7 +224,7 @@
             width: 8.33333333% !important;
         }
     }
-    @media (min-width: $screen-md) {
+    @media (min-width: $screen-lg) {
         &.lv-col-md-12 > ul > li {
             width: 100% !important;
         }
@@ -261,7 +262,7 @@
             width: 16.66666667% !important;
         }
     }
-    @media (min-width: $screen-lg) {
+    @media (min-width: $screen-xl) {
         &.lv-col-lg-12 > ul > li {
             width: 100% !important;
         }

@@ -1,13 +1,12 @@
-import { button } from "../variables";
+import { badge } from "../variables";
+/*
 
-//
-// DISCLAIMER:
-// Do not change this file because it is core styling.
-// Customizing core files will make updating Atlas much more difficult in the future.
-// To customize any core styling, copy the part you want to customize to styles/native/app/ so the core styling is overwritten.
-//
+DISCLAIMER:
+Do not change this file because it is core styling.
+Customizing core files will make updating Atlas much more difficult in the future.
+To customize any core styling, copy the part you want to customize to styles/native/app/ so the core styling is overwritten.
 
-/* ==========================================================================
+==========================================================================
     Badge
 
 //== Design Properties
@@ -16,33 +15,33 @@ import { button } from "../variables";
 // Badge Colors
 export const badgePrimary = {
     container: {
-        backgroundColor: button.primary.backgroundColor,
+        backgroundColor: badge.primary.backgroundColor
     },
     caption: {
-        color: button.primary.color,
-    },
+        color: badge.primary.color
+    }
 };
 export const badgeSuccess = {
     container: {
-        backgroundColor: button.success.backgroundColor,
+        backgroundColor: badge.success.backgroundColor
     },
     caption: {
-        color: button.success.color,
-    },
+        color: badge.success.color
+    }
 };
 export const badgeWarning = {
     container: {
-        backgroundColor: button.warning.backgroundColor,
+        backgroundColor: badge.warning.backgroundColor
     },
     caption: {
-        color: button.warning.color,
-    },
+        color: badge.warning.color
+    }
 };
 export const badgeDanger = {
     container: {
-        backgroundColor: button.danger.backgroundColor,
+        backgroundColor: badge.danger.backgroundColor
     },
     caption: {
-        color: button.danger.color,
-    },
+        color: badge.danger.color
+    }
 };

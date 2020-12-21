@@ -39,35 +39,21 @@
         & > li {
             @include transition();
             padding: $listview-padding-top $listview-padding-right $listview-padding-bottom $listview-padding-left;
-            border-width: 1px 0 0 0;
-            border-style: solid;
-            border-color: $grid-border-color;
+            border-top: 1px solid $grid-border-color;
             background-color: $grid-bg;
-
-            &:first-child {
-                border-radius: 0; // Reset mxui listview style
-            }
 
             &:last-child {
                 border-bottom: 1px solid $grid-border-color;
-                border-radius: 0; // Reset mxui listview style
-            }
-
-            &:nth-child(2n + 1) {
-                background-color: $grid-bg;
-            }
-
-            &:hover {
-                background-color: $grid-bg;
             }
 
             &:focus,
             &:active {
+                outline: 0;
                 background-color: $grid-bg-hover;
             }
 
             &.selected {
-                background-color: $grid-bg-selected !important;
+                background-color: $grid-bg-selected;
             }
         }
     }
@@ -83,7 +69,7 @@
 .profile-phone .mx-listview {
     .mx-listview-searchbar {
         margin-bottom: 3px;
-        background: #FFFFFF;
+        background: #ffffff;
         box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.14);
 
         input {

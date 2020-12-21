@@ -137,9 +137,9 @@ public class TestManager
 				if (testSuite.getAutoRollbackMFs()) {
 					setupContext = Core.createSystemContext();
 					setupContext.startTransaction();
-					Core.execute(setupContext, testSuite.getModule() + ".Setup", emptyArguments);
+					Core.microflowCall(testSuite.getModule() + ".Setup").execute(setupContext);
 				} else {
-					Core.execute(Core.createSystemContext(), testSuite.getModule() + ".Setup", emptyArguments);
+					Core.microflowCall(testSuite.getModule() + ".Setup").execute(Core.createSystemContext());
 				}
 			}
 			catch(Exception e) {
@@ -162,7 +162,7 @@ public class TestManager
 				if (testSuite.getAutoRollbackMFs()) {
 					tearDownContext.startTransaction();
 				}
-				Core.execute(tearDownContext, testSuite.getModule() + ".TearDown", emptyArguments);
+				Core.microflowCall(testSuite.getModule() + ".TearDown").execute(tearDownContext);
 			}
 			catch (Exception e)
 			{
@@ -357,7 +357,7 @@ public class TestManager
 		long start = System.currentTimeMillis();
 
 		try {
-			Object resultObject = Core.execute(mfContext, mf, emptyArguments);
+			Object resultObject = Core.microflowCall(mf).execute(mfContext);
 
 			start = System.currentTimeMillis() - start;
 			boolean res = 	resultObject == null || Boolean.TRUE.equals(resultObject) || "".equals(resultObject);

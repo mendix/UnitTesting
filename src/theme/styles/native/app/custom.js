@@ -1,1 +1,1 @@
-import {} from "../core/variables";
+export {};

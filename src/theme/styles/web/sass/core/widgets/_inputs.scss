@@ -30,13 +30,29 @@
     @if $form-input-style==lined {
         @extend .form-control-lined;
     }
+
+    &::placeholder {
+        color: $form-input-placeholder-color;
+    }
 }
 
-.form-control:focus {
+.form-control:not([readonly]):focus {
     border-color: $form-input-border-focus-color;
     outline: 0;
     background-color: $form-input-bg-focus;
     box-shadow: none;
+}
+
+.form-control[disabled],
+.form-control[readonly],
+fieldset[disabled] .form-control {
+    opacity: 1;
+    background-color: $form-input-bg-disabled;
+}
+
+.form-control[disabled],
+fieldset[disabled] .form-control {
+    cursor: not-allowed;
 }
 
 // Lined
@@ -56,8 +72,8 @@
     overflow: hidden;
     flex: 1;
     min-height: auto;
-    padding: $form-input-padding-y $form-input-padding-x;
-    border-bottom: 1px solid $form-input-static-border-color;
+    padding: $form-input-static-padding-y $form-input-static-padding-x;
+    //border-bottom: 1px solid $form-input-static-border-color;
     font-size: $form-input-font-size;
     line-height: $form-input-line-height;
 
@@ -70,7 +86,6 @@
 select.form-control {
     $arrow: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='15px' height='8px'><polyline id='Line' fill='none' stroke='%23555555' points='0.5 0.5 6 6 11.545361 0.5'></polyline></svg>";
     padding-right: 30px;
-    padding-left: 30px;
     background-image: url($arrow);
     background-repeat: no-repeat;
     background-position: calc(100% - #{$form-input-padding-x}) center;
@@ -80,9 +95,9 @@ select.form-control {
 }
 
 .form-control.mx-selectbox {
+    align-items: center;
     flex-direction: row-reverse;
     justify-content: space-between;
-    align-items: center;
 }
 
 // Not editable textarea, textarea will be rendered as a label
@@ -91,7 +106,7 @@ select.form-control {
 }
 
 textarea.form-control {
-    height: auto;
+    flex-basis: auto;
 }
 
 .mx-compound-control {
@@ -99,6 +114,10 @@ textarea.form-control {
     flex: 1;
     flex-wrap: wrap;
     max-width: 100%;
+
+    .btn {
+        margin-left: $spacing-small;
+    }
 
     .mx-validation-message {
         flex-basis: 100%;
@@ -112,21 +131,21 @@ textarea.form-control {
     flex-direction: row;
     margin-bottom: $form-group-margin-bottom;
 
-    & > div[class*='col-'] {
+    & > div[class*="col-"] {
         display: flex;
         align-items: center;
         flex-wrap: wrap;
     }
 
-    & > [class*='col-'] {
+    & > [class*="col-"] {
         padding-right: $form-group-gutter;
         padding-left: $form-group-gutter;
     }
 
     // Alignment content
-    div[class*='textBox'] > .control-label,
-    div[class*='textArea'] > .control-label,
-    div[class*='datePicker'] > .control-label {
+    div[class*="textBox"] > .control-label,
+    div[class*="textArea"] > .control-label,
+    div[class*="datePicker"] > .control-label {
         @extend .form-control-static;
     }
 
@@ -134,6 +153,7 @@ textarea.form-control {
     .control-label {
         overflow: hidden;
         margin-bottom: 5px;
+        text-align: left;
         text-overflow: ellipsis;
         color: $form-label-color;
         font-size: $form-label-size;
@@ -170,7 +190,7 @@ textarea.form-control {
     transform: translateZ(0);
 }
 
-@media only screen and (min-width: $screen-sm) {
+@media only screen and (min-width: $screen-md) {
     .form-horizontal {
         .control-label {
             margin-bottom: 0;
@@ -181,28 +201,34 @@ textarea.form-control {
     }
 }
 
+@media only screen and (max-width: $screen-sm-max) {
+    .form-group {
+        flex-direction: column;
+    }
+}
+
 @media only screen and (max-device-width: 1024px) and (-webkit-min-device-pixel-ratio: 0) {
     // Fixes alignment bug on iPads / iPhones where datefield is not aligned vertically
-    input[type='date'],
-    input[type='time'],
-    input[type='datetime-local'],
-    input[type='month'] {
+    input[type="date"],
+    input[type="time"],
+    input[type="datetime-local"],
+    input[type="month"] {
         line-height: 1;
     }
     // Fix shrinking of date inputs because inability of setting a placeholder
-    input[type='time']:not(.has-value):before,
-    input[type='date']:not(.has-value):before,
-    input[type='month']:not(.has-value):before,
-    input[type='datetime-local']:not(.has-value):before {
+    input[type="time"]:not(.has-value):before,
+    input[type="date"]:not(.has-value):before,
+    input[type="month"]:not(.has-value):before,
+    input[type="datetime-local"]:not(.has-value):before {
         margin-right: 0.5em;
         content: attr(placeholder) !important;
-        color: #AAAAAA;
+        color: #aaaaaa;
     }
-    input[type='time'].has-value:before,
-    input[type='date'].has-value:before,
-    input[type='month'].has-value:before,
-    input[type='datetime-local'].has-value:before {
-        content: '' !important;
+    input[type="time"].has-value:before,
+    input[type="date"].has-value:before,
+    input[type="month"].has-value:before,
+    input[type="datetime-local"].has-value:before {
+        content: "" !important;
     }
 }
 
@@ -213,11 +239,16 @@ textarea.form-control {
     }
 }
 
-[dir='rtl'] {
+[dir="rtl"] {
     // Dropdown input widget
     select.form-control {
         padding-right: 30px;
-        padding-left: 30px;
+        padding-left: 0;
         background-position: #{$form-input-padding-x} center;
+    }
+
+    .mx-compound-control .btn {
+        margin-right: $spacing-small;
+        margin-left: 0;
     }
 }

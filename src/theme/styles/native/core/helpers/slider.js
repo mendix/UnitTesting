@@ -1,14 +1,12 @@
-import { Platform }        from "react-native";
-import { brand, contrast } from "../variables";
+import { brand } from "../variables";
+/*
 
-//
-// DISCLAIMER:
-// Do not change this file because it is core styling.
-// Customizing core files will make updating Atlas much more difficult in the future.
-// To customize any core styling, copy the part you want to customize to styles/native/app/ so the core styling is overwritten.
-//
+DISCLAIMER:
+Do not change this file because it is core styling.
+Customizing core files will make updating Atlas much more difficult in the future.
+To customize any core styling, copy the part you want to customize to styles/native/app/ so the core styling is overwritten.
 
-/* ==========================================================================
+==========================================================================
     Slider
 
 //== Design Properties
@@ -17,25 +15,25 @@ import { brand, contrast } from "../variables";
 // Slider Color
 export const sliderSuccess = {
     highlight: {
-        backgroundColor: brand.success,
+        backgroundColor: brand.success
     },
     highlightDisabled: {
-        backgroundColor: Platform.select({ ios: brand.success, android: contrast.low }),
-    },
+        backgroundColor: brand.success
+    }
 };
 export const sliderWarning = {
     highlight: {
-        backgroundColor: brand.warning,
+        backgroundColor: brand.warning
     },
     highlightDisabled: {
-        backgroundColor: Platform.select({ ios: brand.warning, android: contrast.low }),
-    },
+        backgroundColor: brand.warning
+    }
 };
 export const sliderDanger = {
     highlight: {
-        backgroundColor: brand.danger,
+        backgroundColor: brand.danger
     },
     highlightDisabled: {
-        backgroundColor: Platform.select({ ios: brand.danger, android: contrast.low }),
-    },
+        backgroundColor: brand.danger
+    }
 };

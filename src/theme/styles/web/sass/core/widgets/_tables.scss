@@ -30,8 +30,9 @@ table.mx-table {
         > tr {
             /* Table header */
             > th {
-                padding: $padding-table-cell-top $padding-table-cell-right $padding-table-cell-bottom $padding-table-cell-left;s
-                * {
+                padding: $padding-table-cell-top $padding-table-cell-right $padding-table-cell-bottom
+                    $padding-table-cell-left;
+                s * {
                     color: $form-label-color;
                     font-weight: $font-weight-bold;
                     font-weight: $form-label-weight;
@@ -43,7 +44,8 @@ table.mx-table {
             }
             /* Table cells */
             > td {
-                padding: $padding-table-cell-top $padding-table-cell-right $padding-table-cell-bottom $padding-table-cell-left;
+                padding: $padding-table-cell-top $padding-table-cell-right $padding-table-cell-bottom
+                    $padding-table-cell-left;
                 > div > label,
                 .mx-referenceselector-input-wrapper label {
                     padding-top: 7px;
@@ -60,7 +62,8 @@ table.mx-table {
         > tr {
             > th,
             > td {
-                padding: $padding-table-cell-top $padding-table-cell-right $padding-table-cell-bottom $padding-table-cell-left;
+                padding: $padding-table-cell-top $padding-table-cell-right $padding-table-cell-bottom
+                    $padding-table-cell-left;
             }
         }
     }
@@ -72,7 +75,8 @@ table.mx-table {
         > tr {
             > th,
             > td {
-                padding: $padding-table-cell-top $padding-table-cell-right $padding-table-cell-bottom $padding-table-cell-left;
+                padding: $padding-table-cell-top $padding-table-cell-right $padding-table-cell-bottom
+                    $padding-table-cell-left;
             }
         }
     }

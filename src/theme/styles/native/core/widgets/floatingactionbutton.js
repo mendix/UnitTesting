@@ -1,66 +1,80 @@
-import { background, brand, contrast, font } from "../variables";
+import { floatingActionButton, font } from "../variables";
+/*
 
-//
-// DISCLAIMER:
-// Do not change this file because it is core styling.
-// Customizing core files will make updating Atlas much more difficult in the future.
-// To customize any core styling, copy the part you want to customize to styles/native/app/ so the core styling is overwritten.
-//
+DISCLAIMER:
+Do not change this file because it is core styling.
+Customizing core files will make updating Atlas much more difficult in the future.
+To customize any core styling, copy the part you want to customize to styles/native/app/ so the core styling is overwritten.
 
-/* ==========================================================================
+==========================================================================
     Floating Action Button
 
     Default Class For Mendix Floating Action Button Widget
 ========================================================================== */
-
-export const com_mendix_widget_native_floatingactionbutton_FloatingActionButton = (FloatingActionButton = {
+export const com_mendix_widget_native_floatingactionbutton_FloatingActionButton = {
     container: {
-        margin: 30,
+        // All ViewStyle properties are allowed
+        margin: floatingActionButton.container.margin
     },
     button: {
-        size: 50,
-        rippleColor: contrast.lowest,
-        backgroundColor: brand.primary,
-        shadowColor: contrast.low,
-        shadowOpacity: 0.9,
+        // Size, ripplecolor and all ViewStyle properties are allowed
+        size: floatingActionButton.button.size,
+        height: floatingActionButton.button.size,
+        width: floatingActionButton.button.size,
+        rippleColor: floatingActionButton.button.rippleColor,
+        backgroundColor: floatingActionButton.button.backgroundColor,
+        borderColor: floatingActionButton.button.borderColor,
+        borderRadius: floatingActionButton.button.size / 2,
+        borderWidth: 1,
+        elevation: 3,
+        shadowColor: "#000",
+        shadowOpacity: 0.3,
         shadowRadius: 4,
         shadowOffset: {
             width: 0,
-            height: 2,
-        },
-        elevation: 2,
+            height: 2
+        }
     },
     buttonIcon: {
-        size: font.sizeLarge,
-        color: contrast.lowest,
+        // Size and color are allowed
+        size: floatingActionButton.buttonIcon.size,
+        color: floatingActionButton.buttonIcon.color
     },
     secondaryButton: {
-        size: 30,
-        backgroundColor: background.secondary,
-        shadowColor: contrast.lower,
-        shadowOpacity: 0.9,
+        // Size and all ViewStyle properties are allowed
+        size: floatingActionButton.secondaryButton.size,
+        backgroundColor: floatingActionButton.secondaryButton.backgroundColor,
+        elevation: 2,
+        shadowColor: "#000",
+        shadowOpacity: 0.3,
         shadowRadius: 4,
         shadowOffset: {
             width: 0,
-            height: 2,
-        },
-        elevation: 2,
+            height: 2
+        }
     },
     secondaryButtonIcon: {
-        size: font.sizeSmall,
-        color: contrast.high,
+        // Size and color are allowed
+        size: floatingActionButton.secondaryButtonIcon.size,
+        color: floatingActionButton.secondaryButtonIcon.color
     },
-    secondaryButtonCaption: {},
+    secondaryButtonCaption: {
+        // All TextStyle properties are allowed
+        color: floatingActionButton.secondaryButtonCaption.color,
+        fontSize: floatingActionButton.secondaryButtonCaption.fontSize,
+        lineHeight: floatingActionButton.secondaryButtonCaption.fontSize,
+        fontFamily: font.family
+    },
     secondaryButtonCaptionContainer: {
-        overflow: "hidden",
-        marginHorizontal: 15,
-        shadowColor: contrast.lower,
-        shadowOpacity: 0.9,
+        // All ViewStyle properties are allowed
+        backgroundColor: floatingActionButton.secondaryButtonCaptionContainer.backgroundColor,
+        marginHorizontal: 5,
+        elevation: 2,
+        shadowOpacity: 0.3,
         shadowRadius: 4,
         shadowOffset: {
             width: 0,
-            height: 2,
-        },
-        elevation: 2,
-    },
-});
+            height: 2
+        }
+    }
+};
