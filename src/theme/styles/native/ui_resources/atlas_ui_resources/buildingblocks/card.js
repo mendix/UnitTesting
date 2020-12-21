@@ -1,118 +1,103 @@
-import { Platform }                              from "react-native";
+import { Platform } from "react-native";
 import { background, border, contrast, spacing } from "../../../core/variables";
-
-/* ==========================================================================
+/*
+==========================================================================
     Cards
 
-========================================================================== */
-
+==========================================================================
+*/
 export const cardShadow = {
-    container: {
-        elevation: 1.5,
-        shadowColor: contrast.lower,
-        shadowOpacity: 0.7,
-        shadowRadius: 10,
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-    },
+    elevation: 1.5,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    shadowOffset: {
+        width: 0,
+        height: 2
+    }
 };
-
 export const card = {
     container: {
-        borderRadius: border.radius,
+        borderRadius: border.radiusLarge,
         backgroundColor: background.primary,
-        marginBottom: spacing.regular,
-
+        // marginBottom: spacing.regular,
         ...Platform.select({
             android: {
                 borderWidth: 1,
-                borderColor: contrast.lowest,
-            },
+                borderColor: contrast.lowest
+            }
         }),
-        ...cardShadow.container,
-    },
+        ...cardShadow
+    }
 };
-
-//== Elements
-//-------------------------------------------------------------------------------------------------------------------//
-
-//== Variations
-//-------------------------------------------------------------------------------------------------------------------//
-// Card Action
-export const cardAction = {
-    container: {
-        flex: 1,
-        flexBasis: "40%",
-        aspectRatio: 1,
-        borderWidth: 1,
-        borderColor: border.color,
-        borderRadius: border.radius,
-        padding: spacing.regular,
-    },
-};
-
-export const cardActionImage = {
-    image: {
-        maxHeight: 70,
-        resizeMode: "contain",
-    },
-};
-
-//-------------------------------------------------------------------------------------------------------------------//
-// Card Product
-export const cardProductImage = {
+//
+// == Elements
+// -------------------------------------------------------------------------------------------------------------------//
+export const cardImage = {
     container: {
         overflow: "hidden",
-        borderTopLeftRadius: border.radius,
-        borderTopRightRadius: border.radius,
+        borderTopLeftRadius: border.radiusLarge,
+        borderTopRightRadius: border.radiusLarge
     },
     image: {
         width: "100%",
-        height: 250,
-        resizeMode: "cover",
-    },
+        height: 128,
+        resizeMode: "cover"
+    }
 };
-export const cardProductImageFull = {
+export const cardImageBackground = {
     container: {
-        ...cardProductImage.container,
-        borderBottomLeftRadius: border.radius,
-        borderBottomRightRadius: border.radius,
+        ...cardImage.container,
+        borderBottomLeftRadius: border.radiusLarge,
+        borderBottomRightRadius: border.radiusLarge
     },
-    image: cardProductImage.image,
+    image: {
+        width: "100%",
+        height: 300,
+        resizeMode: "cover"
+    }
 };
-
-export const cardProductBody = {
+export const cardBodyAbsolute = {
     container: {
         position: "absolute",
         end: 0,
         start: 0,
         bottom: 0,
-        backgroundColor: "transparent",
-    },
+        backgroundColor: "transparent"
+    }
 };
-
-export const cardRating = {
+//
+// == Variations
+// -------------------------------------------------------------------------------------------------------------------//
+// Card Action
+export const cardAction = {
     container: {
-        flexShrink: 1,
-        justifyContent: "flex-start",
-    },
-    icon: {
-        size: 18,
-    },
+        maxWidth: "100%",
+        height: 104,
+        borderWidth: border.width,
+        borderColor: border.color,
+        borderRadius: border.radiusLarge,
+        padding: spacing.regular,
+        ...cardShadow
+    }
 };
-
-//-------------------------------------------------------------------------------------------------------------------//
+export const cardActionImage = {
+    image: {
+        maxHeight: 70,
+        resizeMode: "contain"
+    }
+};
+//
+// -------------------------------------------------------------------------------------------------------------------//
 // Card Payment
 export const cardPaymentImage = {
     container: {
         flex: -1,
-        maxHeight: 250,
+        maxHeight: 250
     },
     image: {
         width: "100%",
         maxHeight: 250,
-        resizeMode: "contain",
-    },
+        resizeMode: "contain"
+    }
 };

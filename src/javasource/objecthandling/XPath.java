@@ -256,6 +256,15 @@ public class XPath<T>
 			return "//" + this.entity + "[" + builder.toString() + "]";
 		return "//" + this.entity;
 	}
+	public XPath<T> gte(Object attr, Object valuecomparison) {
+		return compare(attr,">=", valuecomparison);
+	}
+
+	public XPath<T> gte(Object... pathAndValue) {
+		assertEven(pathAndValue);
+		return compare(Arrays.copyOfRange(pathAndValue, 0, pathAndValue.length -1), ">=", pathAndValue[pathAndValue.length -1 ]);
+	}
+													  
 	
 	private void assertEmptyStack() throws IllegalStateException
 	{
