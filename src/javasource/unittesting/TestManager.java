@@ -366,6 +366,8 @@ public class TestManager
 
 			if (res) {
 				test.setResultMessage("Microflow completed successfully");
+			} else if (resultObject instanceof String) {
+				test.setResultMessage((String)resultObject);
 			}
 
 			return res;
