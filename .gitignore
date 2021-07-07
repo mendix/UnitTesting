@@ -1,6 +1,7 @@
 
 #mxgit-marker-start
 src/.svn
+src/GPUCache
 src/modeler-merge-marker
 src/.mendix-cache
 src/*.mpr.lock
