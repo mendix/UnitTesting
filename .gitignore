@@ -9,8 +9,10 @@ src/*.mpr.left*
 src/*.mpr.right*
 src/.settings
 src/deployment
+src/GPUCache
 src/releases
 src/javasource/communitycommons
+target
 proxies
 *.launch
 .classpath
