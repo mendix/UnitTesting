@@ -13,8 +13,10 @@ src/deployment
 src/releases
 src/javasource/communitycommons
 proxies
+target
 *.launch
 .classpath
 .project
+.vscode
 #mxgit-marker-end
 
