@@ -6,7 +6,7 @@ Module to run Mendix and JUnit unit tests inside a project.
 ## Dependencies
 - 'ObjectHandling' module
 - junit-4.13.1.jar
-- commons-io-2.8.0.jar
+- commons-io-2.11.0.jar
 - commons-lang3-3.11.jar
 - hamcrest-2.2.jar
 - httpclient5-5.0.3.jar
