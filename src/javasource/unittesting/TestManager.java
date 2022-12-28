@@ -479,7 +479,7 @@ public class TestManager
 
 			String className = null;
 
-			if (fileName.startsWith(pkgname) && fileName.endsWith(".class")) {
+			if (fileName.startsWith(pkgname.concat("/")) && fileName.endsWith(".class")) {
 				fileName = fileName.replace("/", ".");
 				// removes the .class extension
 				className = fileName.substring(0, fileName.length() - 6);
