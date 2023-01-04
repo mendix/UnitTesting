@@ -639,7 +639,7 @@ public class TestManager
 			 */
 			StringBuilder countQuery = new StringBuilder();
 			countQuery.append(String.format("//%s", UnitTest.entityName));
-			countQuery.append(String.format("[%s=$TestSuite]", UnitTest.MemberNames.UnitTest_TestSuite));
+			countQuery.append(String.format("[%s=" + testSuite.getMendixObject().getId().toLong() + "]", UnitTest.MemberNames.UnitTest_TestSuite));
 			Long testCount = Core.retrieveXPathQueryAggregate(context, "count(" + countQuery.toString() + ")");
 			
 			testSuite.setTestCount(testCount);
