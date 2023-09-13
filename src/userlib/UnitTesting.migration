@@ -1,0 +1,17 @@
+dependency commons-io:commons-io:2.11.0
+dependency org.apache.commons:commons-lang3:3.12.0
+dependency org.apache.httpcomponents.client5:httpclient5:5.0.3
+dependency junit:junit:4.13.1
+dependency org.hamcrest:hamcrest:2.2
+delete commons-io-2.11.0.jar
+delete commons-io-2.11.0.jar.UnitTesting.RequiredLib
+delete commons-lang3-3.12.0.jar
+delete commons-lang3-3.12.0.jar.UnitTesting.RequiredLib
+delete hamcrest-2.2.jar
+delete hamcrest-2.2.jar.UnitTesting.RequiredLib
+delete httpclient5-5.0.3.jar
+delete httpclient5-5.0.3.jar.UnitTesting.RequiredLib
+delete httpcore5-5.0.3.jar
+delete httpcore5-5.0.3.jar.UnitTesting.RequiredLib
+delete junit-4.13.1.jar
+delete junit-4.13.1.jar.UnitTesting.RequiredLib
