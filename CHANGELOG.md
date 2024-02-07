@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [9.4.2] - 2024-02-07
+
+### Fixed:
+- We updated slf4j-api from 1.7.36 to 2.0.9
+
+Note: Review the dependencies in the userlib folder after upgrading the Unit Testing module. Also, if you use any slf4j libraries other than slf4j-api, make sure their major versions are matching.
+
 ## [9.4.1] - 2023-11-14
 
 ### Fixed:

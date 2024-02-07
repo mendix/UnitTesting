@@ -1,6 +1,7 @@
 dependency commons-io:commons-io:2.11.0
 dependency org.apache.commons:commons-lang3:3.12.0
 dependency org.apache.httpcomponents.client5:httpclient5:5.2.1
+dependency org.slf4j:slf4j-api:2.0.9
 dependency junit:junit:4.13.1
 delete commons-io-2.11.0.jar
 delete commons-io-2.11.0.jar.UnitTesting.RequiredLib
@@ -16,5 +17,5 @@ delete httpcore5-h2-5.2.jar
 delete httpcore5-h2-5.2.jar.UnitTesting.RequiredLib
 delete junit-4.13.1.jar
 delete junit-4.13.1.jar.UnitTesting.RequiredLib
-delete slf4j-api-1.7.36.jar
-delete slf4j-api-1.7.36.jar.UnitTesting.RequiredLib
+delete slf4j-api-2.0.9.jar
+delete slf4j-api-2.0.9.jar.UnitTesting.RequiredLib
