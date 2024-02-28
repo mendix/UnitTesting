@@ -12,14 +12,14 @@ public class UnittestingUnitTest1
 	@Before
 	public void setup() throws InterruptedException {
 		this.state = false;
-		Thread.sleep(1000);
+		Thread.sleep(10);
 	}
 	
 	@Test
-	public void testOfOneSecondSetupAndOneSecundRun() throws InterruptedException {
+	public void testOfOneMsSecondSetupAndOneMsSecundRun() throws InterruptedException {
 		this.state = true;
 		TestManager.instance().reportStep("Sleeping a while");
-		Thread.sleep(1000);
+		Thread.sleep(10);
 		TestManager.instance().reportStep("Sleeping done!");
 		assertTrue(state);
 	}
