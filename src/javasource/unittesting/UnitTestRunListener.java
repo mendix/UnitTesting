@@ -16,7 +16,6 @@ import unittesting.proxies.UnitTest;
 import unittesting.proxies.UnitTestResult;
 
 public class UnitTestRunListener extends RunListener {
-	
 
 	private IContext context;
 	private TestSuite testSuite;
@@ -41,7 +40,7 @@ public class UnitTestRunListener extends RunListener {
 		String message = "Starting JUnit test " + description.getClassName() + "." + description.getMethodName();
 		TestManager.LOG.info(message);
 		TestManager.instance().reportStep(message);
-		
+
 		UnitTest t = getUnitTest(description);
 		t.setResult(UnitTestResult._1_Running);
 		t.setResultMessage("");
@@ -56,7 +55,7 @@ public class UnitTestRunListener extends RunListener {
 	@Override
 	public void testFinished(Description description) throws Exception {
 		TestManager.LOG.info("Finished test " + description.getClassName() + "." + description.getMethodName());
-		
+
 		UnitTest t = getUnitTest(description);
 
 		if (t.getResult() == UnitTestResult._1_Running) {
@@ -67,62 +66,58 @@ public class UnitTestRunListener extends RunListener {
 			t.setResultMessage("JUnit test completed successfully");
 			t.setReadableTime((delta > 10000 ? Math.round(delta / 1000) + " seconds" : delta + " milliseconds"));
 		}
-		
+
 		t.setLastStep(TestManager.instance().getLastReportedStep());
 		t.commit();
 	}
 
 	@Override
 	public void testFailure(Failure failure) throws java.lang.Exception {
-		boolean isCloudSecurityError = 
-				failure.getException() != null && 
-				failure.getException() instanceof AccessControlException &&
-				((AccessControlException) failure.getException()).getPermission().getName().equals("accessDeclaredMembers");
-		
+		boolean isCloudSecurityError = failure.getException() != null
+				&& failure.getException() instanceof AccessControlException
+				&& ((AccessControlException) failure.getException()).getPermission().getName()
+						.equals("accessDeclaredMembers");
+
 		UnitTest t = getUnitTest(failure.getDescription());
 
-		/** 
+		/**
 		 * Test itself failed
-		 */		
-		TestManager.LOG.error("Failed test (at step '" + TestManager.instance().getLastReportedStep() + "') " + failure.getDescription().getClassName() + "." + failure.getDescription().getMethodName() + " : " + failure.getMessage(), failure.getException());
+		 */
+		TestManager.LOG.error("Failed test (at step '" + TestManager.instance().getLastReportedStep() + "') "
+				+ failure.getDescription().getClassName() + "." + failure.getDescription().getMethodName() + " : "
+				+ failure.getMessage(), failure.getException());
 
 		testSuite.setTestFailedCount(testSuite.getTestFailedCount() + 1);
 		testSuite.commit();
-		
+
 		t.setResult(UnitTestResult._2_Failed);
 		t.setResultMessage(String.format("%s %s: %s\n\n:%s",
 				isCloudSecurityError ? "CLOUD SECURITY EXCEPTION \n\n" + TestManager.CLOUD_SECURITY_ERROR : "FAILED",
-				findProperExceptionLine(failure.getTrace()),
-				failure.getMessage(),
-				failure.getTrace()
-				));
-		
+				findProperExceptionLine(failure.getTrace()), failure.getMessage(), failure.getTrace()));
+
 		t.setLastStep(TestManager.instance().getLastReportedStep());
 		t.setLastRun(new Date());
 		t.commit();
 	}
 
-	private long getUnitTestInnerTime(Description description, UnitTest t)
-			throws IllegalAccessException, IllegalArgumentException,
-			InvocationTargetException, NoSuchMethodException, SecurityException
-			{
+	private long getUnitTestInnerTime(Description description, UnitTest t) throws IllegalAccessException,
+			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
 		long delta = System.currentTimeMillis() - t.getLastRun().getTime();
 
-		if (AbstractUnitTest.class.isAssignableFrom(description.getTestClass())) 
+		if (AbstractUnitTest.class.isAssignableFrom(description.getTestClass()))
 			delta = (Long) description.getTestClass().getMethod("getTestRunTime").invoke(null);
 		return delta;
 	}
 
-	private String findProperExceptionLine(String trace)
-	{
+	private String findProperExceptionLine(String trace) {
 		String[] lines = trace.split("\n");
 		if (lines.length > 2)
-			for(int i = 1; i < lines.length; i++) {
+			for (int i = 1; i < lines.length; i++) {
 				String line = lines[i].trim();
-				if (!line.startsWith("at org.junit") && line.contains("(")) 
-					return " at " + line.substring(line.indexOf('(') + 1, line.indexOf(')')).replace(":"," line ");
+				if (!line.startsWith("at org.junit") && line.contains("("))
+					return " at " + line.substring(line.indexOf('(') + 1, line.indexOf(')')).replace(":", " line ");
 			}
-		
+
 		return "";
 	}
 }
