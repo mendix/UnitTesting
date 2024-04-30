@@ -120,6 +120,7 @@ public class TestManager {
 
 			junit.run(request);
 		}
+		updateTestSuiteFailedCountAndResult(context, testSuite);
 	}
 
 	private void runMfSetup(TestSuite testSuite) {
@@ -377,6 +378,36 @@ public class TestManager {
 
 			LOG.info("Finished unittest " + mf + ": " + test.getResult());
 		}
+	}
+
+	private void updateTestSuiteFailedCountAndResult(IContext context, TestSuite testSuite) throws CoreException {
+		long testSuiteObjectId = testSuite.getMendixObject().getId().toLong();
+
+		StringBuilder baseQuery = new StringBuilder();
+		baseQuery.append(String.format("//%s", UnitTest.entityName));
+		baseQuery.append(String.format("[%s=$TestSuite]", UnitTest.MemberNames.UnitTest_TestSuite));
+
+		long failedCount = Core.createXPathQuery(baseQuery + "[Result = '_2_Failed']")
+				.setVariable("TestSuite", testSuiteObjectId).execute(context).size();
+
+		if (failedCount > 0) {
+			testSuite.setResult(UnitTestResult._2_Failed);
+			testSuite.setTestFailedCount(failedCount);
+			testSuite.commit();
+			LOG.trace("Update test suite failed count to " + failedCount + " and result to 'Failed'");
+			return;
+		}
+
+		long pendingCount = Core.createXPathQuery(baseQuery + "[(Result = '_1_Running' or Result = empty)]")
+				.setVariable("TestSuite", testSuiteObjectId).execute(context).size();
+
+		if (pendingCount > 0)
+			return;
+
+		testSuite.setResult(UnitTestResult._3_Success);
+		testSuite.setTestFailedCount(0L);
+		testSuite.commit();
+		LOG.trace("Reset test suite failed count and update result to 'Success'");
 	}
 
 	private void commitSilent(UnitTest test) {
