@@ -34,11 +34,12 @@ public class RunAllUnitTestsWrapper extends CustomJavaAction<java.lang.Boolean>
 
 		// BEGIN USER CODE
 		try {
-			//Run tests in a new context without transaction!
+			// Run tests in a new context without transaction!
 			TestManager.instance().runTestSuite(Core.createSystemContext(), testRun);
-		}
-		catch(Exception e) {
-			TestManager.LOG.error("An error occurred while trying to run the unit tests: " + ExceptionUtils.getRootCauseMessage(e), e);
+		} catch (Exception e) {
+			TestManager.LOG.error(
+					"An error occurred while trying to run the unit tests: " + ExceptionUtils.getRootCauseMessage(e),
+					e);
 			return false;
 		}
 		return true;
