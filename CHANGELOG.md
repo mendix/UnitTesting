@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [9.4.3] - 2024-05-01
+
+### Fixed:
+- We fixed an issue where the result of a test suite was not updated after running an individual test
+- We fixed an issue in transaction handling for teardown microflows that could result in a database lock
+- We changed the length to limited for the 'Name' attribute in the UnitTest entity
+
 ## [9.4.2] - 2024-02-07
 
 ### Fixed:
