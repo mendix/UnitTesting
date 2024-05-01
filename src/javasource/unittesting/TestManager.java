@@ -130,6 +130,7 @@ public class TestManager {
 				if (testSuite.getAutoRollbackMFs()) {
 					setupContext = Core.createSystemContext();
 					setupContext.startTransaction();
+					LOG.trace("Start transaction for setup");
 					Core.microflowCall(testSuite.getModule() + ".Setup").execute(setupContext);
 				} else {
 					Core.microflowCall(testSuite.getModule() + ".Setup").execute(Core.createSystemContext());
@@ -148,10 +149,13 @@ public class TestManager {
 				LOG.info("Running TearDown microflow..");
 				if (tearDownContext == null) {
 					tearDownContext = Core.createSystemContext();
+
+					if (testSuite.getAutoRollbackMFs()) {
+						tearDownContext.startTransaction();
+						LOG.trace("Start transaction for teardown");
+					}
 				}
-				if (testSuite.getAutoRollbackMFs()) {
-					tearDownContext.startTransaction();
-				}
+
 				Core.microflowCall(testSuite.getModule() + ".TearDown").execute(tearDownContext);
 			} catch (Exception e) {
 				LOG.error("Severe: exception in unittest TearDown microflow '" + testSuite.getModule() + ".TearDown': "
@@ -160,8 +164,9 @@ public class TestManager {
 			}
 		}
 
-		// Either we had a teardown a teardown or
+		// Rollback teardown and/or setup transaction
 		if (testSuite.getAutoRollbackMFs() && tearDownContext != null) {
+			LOG.trace("Rollback transaction for setup and/or teardown");
 			tearDownContext.rollbackTransaction();
 		}
 
@@ -335,7 +340,9 @@ public class TestManager {
 				mfContext = setupContext.clone();
 			else
 				mfContext = Core.createSystemContext();
+
 			mfContext.startTransaction();
+			LOG.trace("Start transaction for unit test");
 		} else {
 			mfContext = Core.createSystemContext();
 		}
@@ -358,8 +365,6 @@ public class TestManager {
 
 			return res;
 		} catch (Exception e) {
-			if (testSuite.getAutoRollbackMFs())
-				mfContext.startTransaction();
 			start = System.currentTimeMillis() - start;
 			test.setResult(UnitTestResult._2_Failed);
 			Throwable cause = ExceptionUtils.getRootCause(e);
@@ -370,8 +375,10 @@ public class TestManager {
 			return false;
 
 		} finally {
-			if (testSuite.getAutoRollbackMFs())
+			if (testSuite.getAutoRollbackMFs() && mfContext.isInTransaction()) {
+				LOG.trace("Rollback transaction for unit test");
 				mfContext.rollbackTransaction();
+			}
 			test.setLastStep(lastStep);
 			test.setReadableTime((start > 10000 ? Math.round(start / 1000) + " seconds" : start + " milliseconds"));
 			commitSilent(test);
