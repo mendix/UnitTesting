@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [9.5.0] - 2024-05-28
+
+### Fixed:
+- We updated the unit test details page for React client compatibility, introduced in Mendix 10.7.0
+
 ## [9.4.3] - 2024-05-01
 
 ### Fixed:
