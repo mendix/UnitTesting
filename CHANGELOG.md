@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [9.5.1] - 2024-07-04
+
+### Fixed:
+- We fixed the missing Dutch translations in the unit test details page
+- We fixed log node name for the assertion error check microflow
+
 ## [9.5.0] - 2024-05-28
 
 ### Fixed:
