@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [9.5.2] - 2024-10-15
 
 ### Fixed:
-- We updated the Apache Commons IO dependency to 2.17.0. 
+- We updated the Apache Commons IO dependency to 2.17.0 
 
 ## [9.5.1] - 2024-07-04
 
