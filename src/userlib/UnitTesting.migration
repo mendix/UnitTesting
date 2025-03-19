@@ -3,8 +3,8 @@ dependency org.apache.commons:commons-lang3:3.12.0
 dependency org.apache.httpcomponents.client5:httpclient5:5.2.1
 dependency org.slf4j:slf4j-api:2.0.9
 dependency junit:junit:4.13.1
-delete commons-io-2.11.0.jar
-delete commons-io-2.11.0.jar.UnitTesting.RequiredLib
+delete commons-io-2.17.0.jar
+delete commons-io-2.17.0.jar.UnitTesting.RequiredLib
 delete commons-lang3-3.12.0.jar
 delete commons-lang3-3.12.0.jar.UnitTesting.RequiredLib
 delete hamcrest-core-1.3.jar

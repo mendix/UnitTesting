@@ -1,0 +1,68 @@
+@import '../../../theme/web/custom-variables';
+
+.mx-unit-test-master-detail {
+    > .row > div:first-child,
+    > .row > div:last-child {
+        overflow-x: hidden;
+        overflow-y: auto;
+        max-height: 100%;
+    }
+}
+
+@media (max-width: $screen-sm-max) {
+    .mx-unit-test-master-detail {
+        > .row > div:first-child {
+            border-bottom: 1px $border-color-default solid;
+            padding-bottom: $spacing-small;
+        }
+
+        > .row > div:last-child {
+            padding-top: $spacing-large;
+        }
+    }
+}
+
+@media (min-width: $screen-md) {
+    .mx-unit-test-master-detail {
+        > .row > div:first-child {
+            border-right: 1px $border-color-default solid;
+            padding-right: $spacing-large;
+        }
+
+        > .row > div:last-child {
+            padding-left: $spacing-large;
+        }
+    }
+
+    .mx-unit-test-grid-full-height,
+    .mx-unit-test-grid-full-height > .row,
+    .mx-unit-test-grid-full-height > .row > div:first-child,
+    .mx-unit-test-grid-full-height > .row > div:first-child > .mx-dataview,
+    .mx-unit-test-grid-full-height > .row > div:first-child > .mx-dataview > .mx-dataview-content {
+        height: 100%;
+    }
+}
+
+.mx-unit-test-detail-placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    color: $font-color-detail;
+}
+
+.mx-unit-test-listview.mx-listview > ul > li {
+    background: transparent;
+
+    .mx-dataview {
+        overflow: hidden;
+    }
+}
+
+.mx-unit-test-default-container-gap {
+    gap: $spacing-smaller;
+}
+
+.mx-unit-test-button-container-gap {
+    gap: $spacing-small;
+}

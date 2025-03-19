@@ -1,0 +1,34 @@
+@import '../../../theme/web/custom-variables';
+
+.mx-unit-test-icon {
+    min-width: $unit-test-icon-size;
+    width: $unit-test-icon-size;
+}
+
+.mx-unit-test-icon-medium {
+    min-width: $unit-test-icon-size-medium;
+    width: $unit-test-icon-size-medium;
+}
+
+.mx-unit-test-icon-large {
+    min-width: $unit-test-icon-size-large;
+    width: $unit-test-icon-size-large;
+}
+
+.mx-unit-test-align-right {
+    margin-left: auto;
+}
+
+.mx-unit-test-single-line {
+    max-height: calc($font-size-default * $line-height-base);
+    overflow: hidden;
+}
+
+.mx-unit-test-sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+
+    background-color: $bg-color;
+    padding-bottom: $spacing-medium;
+}

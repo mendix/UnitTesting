@@ -1,2 +1,12 @@
 @import '../../../theme/web/custom-variables';
 
+$unit-test-icon-size: calc($font-size-default + $spacing-smaller);
+$unit-test-icon-size-medium: calc(1.5 * $font-size-default + $spacing-smaller);
+$unit-test-icon-size-large: calc(2 * $font-size-default + $spacing-smaller);
+
+@import '_filters';
+@import '_layout';
+@import '_test-details';
+@import '_timeline';
+@import '_tree-node';
+@import '_util';

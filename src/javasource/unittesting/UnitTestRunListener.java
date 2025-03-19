@@ -1,9 +1,9 @@
 package unittesting;
 
 import java.lang.reflect.InvocationTargetException;
-import java.security.AccessControlException;
 import java.util.Date;
 
+import com.mendix.logging.ILogNode;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
@@ -13,9 +13,10 @@ import com.mendix.systemwideinterfaces.core.IContext;
 
 import unittesting.proxies.TestSuite;
 import unittesting.proxies.UnitTest;
-import unittesting.proxies.UnitTestResult;
+import unittesting.proxies.ENUM_UnitTestResult;
 
 public class UnitTestRunListener extends RunListener {
+	private static final ILogNode LOG = ConfigurationManager.LOG;
 
 	private IContext context;
 	private TestSuite testSuite;
@@ -26,45 +27,45 @@ public class UnitTestRunListener extends RunListener {
 	}
 
 	@Override
-	public void testRunStarted(Description description) throws java.lang.Exception {
-		TestManager.LOG.info("Starting test run");
+	public void testRunStarted(Description description) {
+		LOG.info("Starting test run");
 	}
 
 	@Override
-	public void testRunFinished(Result result) throws java.lang.Exception {
-		TestManager.LOG.info("Test run finished");
+	public void testRunFinished(Result result) {
+		LOG.info("Test run finished");
 	}
 
 	@Override
-	public void testStarted(Description description) throws java.lang.Exception {
+	public void testStarted(Description description) throws Exception {
 		String message = "Starting JUnit test " + description.getClassName() + "." + description.getMethodName();
-		TestManager.LOG.info(message);
+		LOG.info(message);
 		TestManager.instance().reportStep(message);
 
 		UnitTest t = getUnitTest(description);
-		t.setResult(UnitTestResult._1_Running);
+		t.setResult(ENUM_UnitTestResult._1_Running);
 		t.setResultMessage("");
 		t.setLastRun(new Date());
 		t.commit();
 	}
 
 	private UnitTest getUnitTest(Description description) {
-		return TestManager.instance().getUnitTest(context, testSuite, description, false);
+		return TestManager.instance().getJUnitTest(context, testSuite, description);
 	}
 
 	@Override
 	public void testFinished(Description description) throws Exception {
-		TestManager.LOG.info("Finished test " + description.getClassName() + "." + description.getMethodName());
+		LOG.info("Finished test " + description.getClassName() + "." + description.getMethodName());
 
 		UnitTest t = getUnitTest(description);
 
-		if (t.getResult() == UnitTestResult._1_Running) {
-			t.setResult(UnitTestResult._3_Success);
-
-			long delta = getUnitTestInnerTime(description, t);
-
+		if (t.getResult() == ENUM_UnitTestResult._1_Running) {
+			t.setResult(ENUM_UnitTestResult._3_Success);
 			t.setResultMessage("JUnit test completed successfully");
-			t.setReadableTime((delta > 10000 ? Math.round(delta / 1000) + " seconds" : delta + " milliseconds"));
+			t.setReadableTime(getReadableTime(description, t));
+
+			testSuite.setTestPassedCount(testSuite.getTestPassedCount() + 1);
+			testSuite.commit();
 		}
 
 		t.setLastStep(TestManager.instance().getLastReportedStep());
@@ -72,32 +73,36 @@ public class UnitTestRunListener extends RunListener {
 	}
 
 	@Override
-	public void testFailure(Failure failure) throws java.lang.Exception {
-		boolean isCloudSecurityError = failure.getException() != null
-				&& failure.getException() instanceof AccessControlException
-				&& ((AccessControlException) failure.getException()).getPermission().getName()
-						.equals("accessDeclaredMembers");
-
+	public void testFailure(Failure failure) throws Exception {
 		UnitTest t = getUnitTest(failure.getDescription());
 
 		/**
 		 * Test itself failed
 		 */
-		TestManager.LOG.error("Failed test (at step '" + TestManager.instance().getLastReportedStep() + "') "
+		LOG.error("Failed test (at step '" + TestManager.instance().getLastReportedStep() + "') "
 				+ failure.getDescription().getClassName() + "." + failure.getDescription().getMethodName() + " : "
 				+ failure.getMessage(), failure.getException());
 
 		testSuite.setTestFailedCount(testSuite.getTestFailedCount() + 1);
 		testSuite.commit();
 
-		t.setResult(UnitTestResult._2_Failed);
-		t.setResultMessage(String.format("%s %s: %s\n\n:%s",
-				isCloudSecurityError ? "CLOUD SECURITY EXCEPTION \n\n" + TestManager.CLOUD_SECURITY_ERROR : "FAILED",
-				findProperExceptionLine(failure.getTrace()), failure.getMessage(), failure.getTrace()));
-
+		t.setResult(ENUM_UnitTestResult._2_Failed);
+		t.setResultMessage(getFailureMessage(failure));
+		t.setStackTrace(failure.getTrace());
+		t.setReadableTime(getReadableTime(failure.getDescription(), t));
 		t.setLastStep(TestManager.instance().getLastReportedStep());
 		t.setLastRun(new Date());
 		t.commit();
+	}
+
+	private String getFailureMessage(Failure failure) {
+		String message = String.format("JUnit test failed at %s", findProperExceptionLine(failure.getTrace()));
+		return failure.getMessage() != null ? message + ": " + failure.getMessage() : message;
+	}
+
+	private String getReadableTime(Description description, UnitTest t) throws Exception {
+		long delta = getUnitTestInnerTime(description, t);
+		return TestManager.formatAsReadableTime(delta);
 	}
 
 	private long getUnitTestInnerTime(Description description, UnitTest t) throws IllegalAccessException,
@@ -111,12 +116,14 @@ public class UnitTestRunListener extends RunListener {
 
 	private String findProperExceptionLine(String trace) {
 		String[] lines = trace.split("\n");
-		if (lines.length > 2)
+
+		if (lines.length > 2) {
 			for (int i = 1; i < lines.length; i++) {
 				String line = lines[i].trim();
 				if (!line.startsWith("at org.junit") && line.contains("("))
-					return " at " + line.substring(line.indexOf('(') + 1, line.indexOf(')')).replace(":", " line ");
+					return line.substring(line.indexOf('(') + 1, line.indexOf(')')).replace(":", " line ");
 			}
+		}
 
 		return "";
 	}

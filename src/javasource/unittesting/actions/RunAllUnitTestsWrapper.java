@@ -9,7 +9,9 @@
 
 package unittesting.actions;
 
+import com.mendix.logging.ILogNode;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import unittesting.ConfigurationManager;
 import unittesting.TestManager;
 import com.mendix.core.Core;
 import com.mendix.systemwideinterfaces.core.IContext;
@@ -37,7 +39,7 @@ public class RunAllUnitTestsWrapper extends CustomJavaAction<java.lang.Boolean>
 			// Run tests in a new context without transaction!
 			TestManager.instance().runTestSuite(Core.createSystemContext(), testRun);
 		} catch (Exception e) {
-			TestManager.LOG.error(
+			LOG.error(
 					"An error occurred while trying to run the unit tests: " + ExceptionUtils.getRootCauseMessage(e),
 					e);
 			return false;
@@ -57,5 +59,6 @@ public class RunAllUnitTestsWrapper extends CustomJavaAction<java.lang.Boolean>
 	}
 
 	// BEGIN EXTRA CODE
+	private static final ILogNode LOG = ConfigurationManager.LOG;
 	// END EXTRA CODE
 }

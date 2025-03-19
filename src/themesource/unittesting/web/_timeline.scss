@@ -1,0 +1,108 @@
+@import '../../../theme/web/custom-variables';
+
+$timeline-item-height: 80px !default;
+$timeline-item-spacing: 60px !default;
+
+.mx-unit-test-timeline-item {
+    padding: $spacing-smaller 0 $spacing-smaller $timeline-item-spacing;
+    
+    &::before {
+        content: "";
+        display: block;
+        position: absolute;
+        top: 0;
+        left: calc($timeline-item-spacing / 2); 
+        height: 100%;
+        width: 0;
+        border-left: 1px $border-color-default solid;
+    }
+}
+
+.mx-unit-test-timeline-listview > ul > li:first-child .mx-unit-test-timeline-item-static::before {
+    top: 50%;
+}
+
+.mx-unit-test-timeline-listview > ul > li:first-child .mx-unit-test-timeline-item-expandable::before {
+    top: calc($timeline-item-height / 2);
+}
+
+.mx-unit-test-timeline-listview > ul > li:last-child .mx-unit-test-timeline-item-static::before {
+    height: 50%;
+}
+
+.mx-unit-test-timeline-listview > ul > li:last-child .mx-unit-test-timeline-item-expandable::before {
+    height: calc($timeline-item-height / 2);
+}
+
+.mx-unit-test-timeline-listview > ul > li:first-child:last-child .mx-unit-test-timeline-item::before {
+    display: none;
+}
+
+.mx-unit-test-timeline-circle {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: $gray-dark;
+    position: absolute;
+    left: calc($timeline-item-spacing / 2 - 3.5px);    
+}
+
+.mx-unit-test-timeline-item-static .mx-unit-test-timeline-circle {
+    top: calc(50% - 4px);
+}
+
+.mx-unit-test-timeline-item-expandable .mx-unit-test-timeline-circle {
+    top: calc($timeline-item-height / 2 - 4px + $spacing-smaller);
+}
+
+.mx-unit-test-timeline-accordion.widget-accordion {
+    .widget-accordion-group:first-child,
+    .widget-accordion-group:last-child,
+    .widget-accordion-group > .widget-accordion-group-header > .widget-accordion-group-header-button {
+        background-color: transparent;
+        border-radius: 0;
+        min-height: $timeline-item-height;
+    }
+}
+
+.mx-unit-test-timeline-static-content {
+    padding: $spacing-medium;
+    border: 1px $border-color-default solid;
+    min-height: $timeline-item-height;
+}
+
+.mx-unit-test-stacktrace {
+    position: relative;
+    padding: $spacing-small;
+    padding-right: 30px;
+    border: 1px $border-color-default solid;
+    border-radius: 2px;
+}
+
+.mx-unit-test-stacktrace-preview {
+    max-height: calc(3 * $font-size-default * $line-height-base);
+    overflow: hidden;
+    display: block;
+}
+
+.mx-unit-test-stacktrace-full {
+    overflow-wrap: break-word;
+    overflow-y: scroll;
+}
+
+.mx-unit-test-stacktrace-layoutgrid,
+.mx-unit-test-stacktrace-layoutgrid * {
+    height: 100%;
+}
+
+.mx-unit-test-stacktrace-copy-btn {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+}
+
+.mx-unit-test-stacktrace-copy-btn-popup {
+    position: absolute;
+    top: 7px;
+    right: 22px;
+}
