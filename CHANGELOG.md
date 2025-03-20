@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - We exposed a new microflow activity “Assert using expression“ in the microflow toolbox. This action can be used to add a name to your assertion and configure whether or not to stop on failure.
 - We exposed the “Report step“ activity in the microflow toolbox. Use this action to track key steps of the test execution.
 - We introduced a new optional unit test parameter “UnitTestContext”. During test execution, a UnitTestContext object will be passed to this parameter. You can use this object to get access to the name of the test and any assertion results. This can be useful when you have multiple assertions in a single test and want to use the outcome of previous assertions in your test logic.
+- We added Accordion widget as a dependency, compatible with v2.3.4
 - We updated Atlas Core module compatibility to v3.12.5
 - We added Atlas Web Content module as a dependency, compatible with v3.4.2
 - We added Data Widgets module as a dependency, compatible with v2.27.3

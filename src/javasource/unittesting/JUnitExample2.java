@@ -10,21 +10,20 @@ public class JUnitExample2 extends AbstractUnitTest {
 
 	@Before
 	public void setup() throws InterruptedException {
-		Thread.sleep(500);
+		Thread.sleep(10);
 	}
 
 	@After
 	public void tearDown() throws InterruptedException {
-		Thread.sleep(500);
+		Thread.sleep(10);
 	}
 
 	@Test
-	public void evenMoreUnitTests() throws InterruptedException {
+	public void testWithTimeMeasurement() {
 		this.startTimeMeasure();
 
 		this.reportStep(
 				"By inheriting from AbstractUnitTest some utility methods are provided and time can be tracked in a more reliable way (without counting setup and teardown)");
-		Thread.sleep(1000);
 
 		assertTrue(true);
 

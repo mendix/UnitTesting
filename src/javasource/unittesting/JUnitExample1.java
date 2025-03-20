@@ -11,14 +11,14 @@ public class JUnitExample1 {
 	@Before
 	public void setup() throws InterruptedException {
 		this.state = false;
-		Thread.sleep(1000);
+		Thread.sleep(1);
 	}
 
 	@Test
-	public void testOfOneSecondSetupAndOneSecundRun() throws InterruptedException {
+	public void testOfOneMsSetupAndOneMsRun() throws InterruptedException {
 		this.state = true;
 		TestManager.instance().reportStep("Sleeping a while");
-		Thread.sleep(1000);
+		Thread.sleep(1);
 		TestManager.instance().reportStep("Sleeping done!");
 		assertTrue(state);
 	}
