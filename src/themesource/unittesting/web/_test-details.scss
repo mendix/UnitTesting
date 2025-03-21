@@ -1,0 +1,51 @@
+@import '../../../theme/web/custom-variables';
+
+.mx-unit-test-listview .mx-unit-test-icon {
+    @extend .mx-unit-test-icon-medium;
+}
+
+.mx-unit-test-result-failed.widget-accordion {
+    .widget-accordion-group {
+        background-color: transparent;
+        border-color: transparent;
+
+        > .widget-accordion-group-header > .widget-accordion-group-header-button,
+        > .widget-accordion-group-header > .widget-accordion-group-header-button.widget-accordion-group-header-button-clickable:hover,
+        > .widget-accordion-group-header > .widget-accordion-group-header-button.widget-accordion-group-header-button-clickable:focus {
+            background-color: $color-danger-lighter;
+        }
+    }
+}
+
+.mx-test-details-layout-grid {
+    .row {
+        row-gap: 10px;
+    }
+
+    .row > div:first-child {
+        flex-basis: 65%;
+        flex-grow: 1;
+    }
+}
+
+.mx-unit-test-details-button-container {
+    display: flex;
+}
+
+.mx-unit-test-header {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mx-unit-test-rollback-container {
+    display: flex;
+    align-items: center;
+
+    .mx-text {
+        white-space: nowrap;
+    }
+}
+
+.mx-unit-test-suite-result-text .mx-text {
+    white-space: nowrap;
+}

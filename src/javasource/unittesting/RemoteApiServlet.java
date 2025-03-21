@@ -21,9 +21,9 @@ import com.mendix.systemwideinterfaces.core.IMendixObject;
 import com.mendix.thirdparty.org.json.JSONArray;
 import com.mendix.thirdparty.org.json.JSONObject;
 
+import unittesting.proxies.ENUM_UnitTestResult;
 import unittesting.proxies.TestSuite;
 import unittesting.proxies.UnitTest;
-import unittesting.proxies.UnitTestResult;
 
 public class RemoteApiServlet extends RequestHandler {
 
@@ -34,7 +34,7 @@ public class RemoteApiServlet extends RequestHandler {
 	private final String password;
 	private boolean detectedUnitTests = false;
 
-	private final static ILogNode LOG = TestManager.LOG;
+	private static final ILogNode LOG = ConfigurationManager.LOG;
 	private volatile TestSuiteRunner testSuiteRunner;
 
 	public RemoteApiServlet(String password) {
@@ -165,8 +165,8 @@ public class RemoteApiServlet extends RequestHandler {
 			long count = 0l;
 			long failures = 0l;
 
-			List<IMendixObject> testSuites = Core.retrieveXPathQuery(context,
-					String.format("//%s", TestSuite.entityName));
+			List<IMendixObject> testSuites = Core.createXPathQuery(String.format("//%s", TestSuite.entityName))
+					.execute(context);
 
 			for (IMendixObject mxObject : testSuites) {
 				TestSuite testSuite = TestSuite.initialize(context, mxObject);
@@ -183,12 +183,12 @@ public class RemoteApiServlet extends RequestHandler {
 			StringBuilder query = new StringBuilder();
 			query.append(String.format("//%s", UnitTest.entityName));
 			// Failed tests
-			query.append("[" + UnitTest.MemberNames.Result + "=\"" + UnitTestResult._2_Failed + "\"]");
+			query.append("[" + UnitTest.MemberNames.Result + "=\"" + ENUM_UnitTestResult._2_Failed + "\"]");
 			// In test suites that are not running anymore
 			query.append("[" + UnitTest.MemberNames.UnitTest_TestSuite + "/" + TestSuite.entityName + "/"
-					+ TestSuite.MemberNames.Result + "=\"" + UnitTestResult._2_Failed + "\"]");
+					+ TestSuite.MemberNames.Result + "=\"" + ENUM_UnitTestResult._2_Failed + "\"]");
 
-			List<IMendixObject> unitTests = Core.retrieveXPathQuery(context, query.toString());
+			List<IMendixObject> unitTests = Core.createXPathQuery(query.toString()).execute(context);
 
 			for (IMendixObject mxObject : unitTests) {
 				UnitTest test = UnitTest.initialize(context, mxObject);

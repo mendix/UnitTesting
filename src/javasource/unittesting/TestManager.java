@@ -1,41 +1,29 @@
 package unittesting;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
-import java.util.zip.ZipFile;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Request;
-import org.junit.runners.JUnit4;
-import org.junit.runners.model.FrameworkMethod;
-import org.junit.runners.model.InitializationError;
 
 import com.mendix.core.Core;
 import com.mendix.core.CoreException;
+import com.mendix.core.actionmanagement.MicroflowCallBuilder;
 import com.mendix.logging.ILogNode;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.systemwideinterfaces.core.IDataType;
 import com.mendix.systemwideinterfaces.core.IMendixObject;
 
+import unittesting.proxies.ENUM_UnitTestResult;
 import unittesting.proxies.TestSuite;
 import unittesting.proxies.UnitTest;
-import unittesting.proxies.UnitTestResult;
 
 /**
  * @author mwe
@@ -58,16 +46,14 @@ public class TestManager {
 		}
 	}
 
-	static final String CLOUD_SECURITY_ERROR = "Unable to find JUnit test classes or methods. \n\n";
+	private static final ILogNode LOG = ConfigurationManager.LOG;
+	private static final String TEST_CONTEXT_PARAM_NAME = "UnitTestContext";
 
 	private static TestManager instance;
-	public static ILogNode LOG = Core.getLogger("UnitTestRunner");
-
-	private static final Map<String, Class<?>[]> classCache = new HashMap<String, Class<?>[]>();
 
 	private IContext setupContext;
-
-	private String lastStep;
+	private TestExecutionContext executionContext;
+	private String lastStep; // Only applicable for JUnit tests
 
 	public static TestManager instance() {
 		if (instance == null)
@@ -75,18 +61,16 @@ public class TestManager {
 		return instance;
 	}
 
-	private static Class<?>[] getUnitTestClasses(TestSuite testRun) throws ZipException, IOException {
-		if (!classCache.containsKey(testRun.getModule().toLowerCase())) {
+	public TestExecutionContext executionContext() {
+		if (executionContext == null)
+			throw new IllegalStateException("No execution context available");
 
-			ArrayList<Class<?>> classlist = getClassesForPackage(testRun.getModule());
-			Class<?>[] clazzez = classlist.toArray(new Class<?>[classlist.size()]);
-			classCache.put(testRun.getModule().toLowerCase(), clazzez);
-		}
-
-		return classCache.get(testRun.getModule().toLowerCase());
+		return executionContext;
 	}
 
 	public synchronized void runTest(IContext context, UnitTest unitTest) throws ClassNotFoundException, CoreException {
+		if (!ConfigurationManager.verifyModuleIsEnabled()) return;
+
 		TestSuite testSuite = unitTest.getUnitTest_TestSuite();
 
 		/**
@@ -120,11 +104,12 @@ public class TestManager {
 
 			junit.run(request);
 		}
-		updateTestSuiteFailedCountAndResult(context, testSuite);
+
+		updateTestSuiteCountersAndResult(context, testSuite, true);
 	}
 
 	private void runMfSetup(TestSuite testSuite) {
-		if (Core.getMicroflowNames().contains(testSuite.getModule() + ".Setup")) {
+		if (hasMfSetup(testSuite)) {
 			try {
 				LOG.info("Running Setup microflow..");
 				if (testSuite.getAutoRollbackMFs()) {
@@ -144,7 +129,7 @@ public class TestManager {
 
 	private void runMfTearDown(TestSuite testSuite) {
 		IContext tearDownContext = setupContext;
-		if (Core.getMicroflowNames().contains(testSuite.getModule() + ".TearDown")) {
+		if (hasMfTearDown(testSuite)) {
 			try {
 				LOG.info("Running TearDown microflow..");
 				if (tearDownContext == null) {
@@ -175,27 +160,30 @@ public class TestManager {
 	}
 
 	public synchronized void runTestSuites() throws CoreException {
+		if (!ConfigurationManager.verifyModuleIsEnabled()) return;
+
 		LOG.info("Starting testrun on all suites");
 
 		// Context without transaction!
 		IContext context = Core.createSystemContext();
 
-		List<IMendixObject> testsuites = Core.retrieveXPathQuery(context, "//" + TestSuite.entityName);
+		List<IMendixObject> testSuites = Core.createXPathQuery("//" + TestSuite.entityName).execute(context);
 
-		for (IMendixObject suite : testsuites) {
+		for (IMendixObject suite : testSuites) {
 			suite.setValue(context, TestSuite.MemberNames.Result.toString(), null);
-			;
 		}
-		Core.commit(context, testsuites);
+		Core.commit(context, testSuites);
 
-		for (IMendixObject suite : testsuites) {
+		for (IMendixObject suite : testSuites) {
 			runTestSuite(context, TestSuite.load(context, suite.getId()));
 		}
 
 		LOG.info("Finished testrun on all suites");
 	}
 
-	public synchronized boolean runTestSuite(IContext context, TestSuite testSuite) throws CoreException {
+	public synchronized void runTestSuite(IContext context, TestSuite testSuite) throws CoreException {
+		if (!ConfigurationManager.verifyModuleIsEnabled()) return;
+
 		LOG.info("Starting testrun on " + testSuite.getModule());
 
 		/**
@@ -203,8 +191,9 @@ public class TestManager {
 		 */
 		testSuite.setLastRun(new Date());
 		testSuite.setLastRunTime(0L);
+		testSuite.setTestPassedCount(0L);
 		testSuite.setTestFailedCount(0L);
-		testSuite.setResult(UnitTestResult._1_Running);
+		testSuite.setResult(ENUM_UnitTestResult._1_Running);
 		testSuite.commit();
 
 		StringBuilder query = new StringBuilder();
@@ -226,35 +215,36 @@ public class TestManager {
 		 * Run java unit tests
 		 */
 		if (unittesting.proxies.constants.Constants.getFindJUnitTests()) {
-			Class<?>[] clazzez = null;
+			Class<?>[] classes = null;
+
 			try {
-				clazzez = getUnitTestClasses(testSuite);
+				classes = JavaTestDiscovery.getUnitTestClasses(testSuite);
 			} catch (Exception e) {
-				LOG.error(CLOUD_SECURITY_ERROR + e.getMessage(), e);
+				LOG.error("Unable to find JUnit test classes or methods: " + e.getMessage(), e);
 			}
 
-			if (clazzez != null && clazzez.length > 0) {
+			if (classes != null && classes.length > 0) {
 				JUnitCore junit = new JUnitCore();
 				junit.addListener(new UnitTestRunListener(context, testSuite));
-
-				junit.run(clazzez);
+				junit.run(classes);
 			}
 		}
+
 		/**
 		 * Run microflow tests
-		 *
 		 */
-
 		try {
 			runMfSetup(testSuite);
 
 			List<String> mfnames = findMicroflowUnitTests(testSuite);
 
 			for (String mf : mfnames) {
-				if (!runMicroflowTest(mf, getUnitTest(context, testSuite, mf, true), testSuite)) {
+				if (runMicroflowTest(mf, getUnitTest(context, testSuite, mf, true), testSuite)) {
+					testSuite.setTestPassedCount(testSuite.getTestPassedCount() + 1);
+				} else {
 					testSuite.setTestFailedCount(testSuite.getTestFailedCount() + 1);
-					testSuite.commit();
 				}
+				testSuite.commit();
 			}
 
 		} finally {
@@ -265,16 +255,15 @@ public class TestManager {
 		 * Aggregate
 		 */
 		testSuite.setLastRunTime((System.currentTimeMillis() - start) / 1000);
-		testSuite
-				.setResult(testSuite.getTestFailedCount() == 0L ? UnitTestResult._3_Success : UnitTestResult._2_Failed);
+		testSuite.setResult(testSuite.getTestFailedCount() == 0L ? ENUM_UnitTestResult._3_Success
+				: ENUM_UnitTestResult._2_Failed);
 		testSuite.commit();
 
 		LOG.info("Finished testrun on " + testSuite.getModule());
-		return true;
 	}
 
 	public List<String> findMicroflowUnitTests(TestSuite testRun) {
-		List<String> mfnames = new ArrayList<String>();
+		List<String> microflowNames = new ArrayList<>();
 
 		if (testRun.getPrefix1() == null) {
 			testRun.setPrefix1("Test_");
@@ -286,14 +275,60 @@ public class TestManager {
 		String basename1 = (testRun.getModule() + "." + testRun.getPrefix1()).toLowerCase();
 		String basename2 = (testRun.getModule() + "." + testRun.getPrefix2()).toLowerCase();
 
-		// Find microflownames
+		// Find microflow names
 		for (String mf : Core.getMicroflowNames())
 			if (mf.toLowerCase().startsWith(basename1) || mf.toLowerCase().startsWith(basename2))
-				mfnames.add(mf);
+				microflowNames.add(mf);
 
 		// Sort microflow names
-		Collections.sort(mfnames);
-		return mfnames;
+		Collections.sort(microflowNames);
+		return microflowNames;
+	}
+
+	public boolean hasMfSetup(TestSuite testSuite) {
+		return Core.getMicroflowNames().contains(testSuite.getModule() + ".Setup");
+	}
+
+	public boolean hasMfTearDown(TestSuite testSuite) {
+		return Core.getMicroflowNames().contains(testSuite.getModule() + ".TearDown");
+	}
+
+	private boolean hasTestContextInputParameter(String mf) {
+		if (!Core.getInputParameters(mf).containsKey(TEST_CONTEXT_PARAM_NAME))
+			return false;
+
+		IDataType dataType = Core.getInputParameters(mf).get(TEST_CONTEXT_PARAM_NAME);
+		return dataType.isMendixObject()
+				&& unittesting.proxies.UnitTestContext.getType().equals(dataType.getObjectType());
+	}
+
+	public boolean validateTestMicroflow(String mf) {
+		if (Core.getReturnType(mf).getType() != IDataType.DataTypeEnum.Boolean
+				&& Core.getReturnType(mf).getType() != IDataType.DataTypeEnum.String
+				&& Core.getReturnType(mf).getType() != IDataType.DataTypeEnum.Nothing) {
+
+			LOG.warn("Invalid test microflow " + mf
+					+ ": Microflow should return either a boolean or a string or nothing at all");
+			return false;
+		}
+
+		if (Core.getInputParameters(mf).size() == 1 && hasTestContextInputParameter(mf)) {
+			LOG.trace("Identified parameter for unit test context in test microflow " + mf);
+		} else if (!Core.getInputParameters(mf).isEmpty()) {
+			LOG.warn("Invalid test microflow " + mf + ": Identified one or more invalid parameter(s)");
+			return false;
+		}
+
+		return true;
+	}
+
+	private MicroflowCallBuilder buildMicroflowCall(String mf) {
+		MicroflowCallBuilder builder = Core.microflowCall(mf);
+
+		if (hasTestContextInputParameter(mf))
+			builder = builder.withParam(TEST_CONTEXT_PARAM_NAME, executionContext().getUnitTestContext().getMendixObject());
+
+		return builder;
 	}
 
 	private boolean runMicroflowTest(String mf, UnitTest test) throws CoreException {
@@ -305,39 +340,21 @@ public class TestManager {
 		return runMicroflowTest(mf, test, testSuite);
 	}
 
-	private boolean runMicroflowTest(String mf, UnitTest test, TestSuite testSuite) throws CoreException {
+	private boolean runMicroflowTest(String mf, UnitTest test, TestSuite testSuite) {
 		/**
 		 * Prepare...
 		 */
-		LOG.info("Starting unittest for microflow " + mf);
+		LOG.info("Starting unit test for microflow " + mf);
 
-		reportStep("Starting microflow test '" + mf + "'");
-
-		test.setResult(UnitTestResult._1_Running);
 		test.setName(mf);
 		test.setResultMessage("");
 		test.setLastRun(new Date());
-
-		if (Core.getInputParameters(mf).size() != 0) {
-			test.setResultMessage("Unable to start test '" + mf + "', microflow has parameters");
-			test.setResult(UnitTestResult._2_Failed);
-		} else if (Core.getReturnType(mf).getType() != IDataType.DataTypeEnum.Boolean
-				&& Core.getReturnType(mf).getType() != IDataType.DataTypeEnum.String
-				&& Core.getReturnType(mf).getType() != IDataType.DataTypeEnum.Nothing) {
-
-			test.setResultMessage("Unable to start test '" + mf
-					+ "', microflow should return either a boolean or a string or nothing at all");
-
-			test.setResult(UnitTestResult._2_Failed);
-		}
-
-		commitSilent(test);
 
 		IContext mfContext = null;
 
 		if (testSuite.getAutoRollbackMFs()) {
 			if (Core.getMicroflowNames().contains(testSuite.getModule() + ".Setup"))
-				mfContext = setupContext.clone();
+				mfContext = setupContext.createClone();
 			else
 				mfContext = Core.createSystemContext();
 
@@ -347,74 +364,117 @@ public class TestManager {
 			mfContext = Core.createSystemContext();
 		}
 
-		long start = System.currentTimeMillis();
+		executionContext = new TestExecutionContext(mfContext, mf);
+		executionContext().clearTestActivities(test);
+
+		long duration = 0L;
+		long startTimestamp = System.currentTimeMillis();
 
 		try {
-			Object resultObject = Core.microflowCall(mf).execute(mfContext);
+			if (!validateTestMicroflow(mf)) {
+				test.setResult(ENUM_UnitTestResult._2_Failed);
+				commitSilent(test);
 
-			start = System.currentTimeMillis() - start;
-			boolean res = resultObject == null || Boolean.TRUE.equals(resultObject) || "".equals(resultObject);
-
-			test.setResult(res ? UnitTestResult._3_Success : UnitTestResult._2_Failed);
-
-			if (res) {
-				test.setResultMessage("Microflow completed successfully");
-			} else if (resultObject instanceof String) {
-				test.setResultMessage((String) resultObject);
+				executionContext().collectStart(false, "Unable to start test, invalid microflow");
+				return false;
 			}
 
-			return res;
-		} catch (Exception e) {
-			start = System.currentTimeMillis() - start;
-			test.setResult(UnitTestResult._2_Failed);
-			Throwable cause = ExceptionUtils.getRootCause(e);
-			if (cause != null && cause instanceof AssertionException)
-				test.setResultMessage(cause.getMessage());
-			else
-				test.setResultMessage("Exception: " + e.getMessage() + "\n\n" + ExceptionUtils.getStackTrace(e));
-			return false;
+			executionContext().collectStart(true, null);
+			test.setResult(ENUM_UnitTestResult._1_Running);
+			commitSilent(test);
 
+			Object mfReturnValue = buildMicroflowCall(mf).execute(mfContext);
+			duration = System.currentTimeMillis() - startTimestamp;
+
+			boolean returnValueResult = mfReturnValue == null || Boolean.TRUE.equals(mfReturnValue) || "".equals(mfReturnValue);
+
+			if (returnValueResult) {
+				executionContext().collectEnd(true, null);
+			} else if (mfReturnValue instanceof String) {
+				executionContext().collectEnd(false, "Microflow returned string: " + mfReturnValue);
+			} else if (mfReturnValue instanceof Boolean) {
+				executionContext().collectEnd(false, "Microflow returned false");
+			}
+
+			boolean testResult = returnValueResult && !executionContext().hasFailedAssertion(mfContext);
+			test.setResult(testResult ? ENUM_UnitTestResult._3_Success : ENUM_UnitTestResult._2_Failed);
+
+			return testResult;
+		} catch (Exception e) {
+			duration = System.currentTimeMillis() - startTimestamp;
+			test.setResult(ENUM_UnitTestResult._2_Failed);
+			Throwable cause = ExceptionUtils.getRootCause(e);
+
+			if (!(cause instanceof AssertionException)) {
+				test.setStackTrace(ExceptionUtils.getStackTrace(e));
+				executionContext().collectException(e);
+			}
+
+			return false;
 		} finally {
+			executionContext().persistTestActivities(mfContext, test);
+
 			if (testSuite.getAutoRollbackMFs() && mfContext.isInTransaction()) {
 				LOG.trace("Rollback transaction for unit test");
 				mfContext.rollbackTransaction();
 			}
-			test.setLastStep(lastStep);
-			test.setReadableTime((start > 10000 ? Math.round(start / 1000) + " seconds" : start + " milliseconds"));
+
+			test.setResultMessage(executionContext().getResultSummary(mfContext));
+			test.setReadableTime(formatAsReadableTime(duration));
+			if (executionContext().getLastStep() != null)
+				test.setLastStep(executionContext().getLastStep().getMessage());
+
 			commitSilent(test);
 
-			LOG.info("Finished unittest " + mf + ": " + test.getResult());
+			executionContext().delete();
+
+			LOG.info("Finished unit test " + mf + ": " + test.getResult());
 		}
 	}
 
-	private void updateTestSuiteFailedCountAndResult(IContext context, TestSuite testSuite) throws CoreException {
-		long testSuiteObjectId = testSuite.getMendixObject().getId().toLong();
+	public static String formatAsReadableTime(long ms) {
+		return (ms > 10000 ? Math.round(ms / 1000) + " seconds" : 
+			(ms == 0 ?  "<1" : ms) + " milliseconds");
+	}
 
-		StringBuilder baseQuery = new StringBuilder();
-		baseQuery.append(String.format("//%s", UnitTest.entityName));
-		baseQuery.append(String.format("[%s=$TestSuite]", UnitTest.MemberNames.UnitTest_TestSuite));
+	private long getTestSuiteCount(IContext context, TestSuite testSuite, String constraint) {
+		StringBuilder query = new StringBuilder();
+		query.append(String.format("//%s", UnitTest.entityName));
+		query.append(String.format("[%s=%d]", UnitTest.MemberNames.UnitTest_TestSuite,
+				testSuite.getMendixObject().getId().toLong()));
+		if (constraint != null) query.append(constraint);
 
-		long failedCount = Core.createXPathQuery(baseQuery + "[Result = '_2_Failed']")
-				.setVariable("TestSuite", testSuiteObjectId).execute(context).size();
+		return Core.createXPathQuery(String.format("COUNT(%s)", query)).executeAggregateLong(context);
+	}
+
+	public void updateTestSuiteCountersAndResult(IContext context, TestSuite testSuite, boolean commit)
+			throws CoreException {
+		long testCount = getTestSuiteCount(context, testSuite, null);
+		long succeededCount = getTestSuiteCount(context, testSuite, "[Result = '_3_Success']");
+		long failedCount = getTestSuiteCount(context, testSuite, "[Result = '_2_Failed']");
+		long pendingCount = getTestSuiteCount(context, testSuite, "[Result = '_1_Running' or Result = empty]");
+
+		testSuite.setTestCount(testCount);
+		LOG.trace("Updated test count to " + succeededCount);
+
+		testSuite.setTestPassedCount(succeededCount);
+		LOG.trace("Updated test suite succeeded count to " + succeededCount);
+
+		testSuite.setTestFailedCount(failedCount);
+		LOG.trace("Updated test suite failed count to " + failedCount);
 
 		if (failedCount > 0) {
-			testSuite.setResult(UnitTestResult._2_Failed);
-			testSuite.setTestFailedCount(failedCount);
-			testSuite.commit();
-			LOG.trace("Update test suite failed count to " + failedCount + " and result to 'Failed'");
-			return;
+			testSuite.setResult(ENUM_UnitTestResult._2_Failed);
+			LOG.trace("Updated test suite result to 'Failed'");
+		} else if (pendingCount > 0 || testCount == 0) {
+			testSuite.setResult(null);
+			LOG.trace("Updated test suite result to empty");
+		} else {
+			testSuite.setResult(ENUM_UnitTestResult._3_Success);
+			LOG.trace("Updated test suite result to 'Success'");
 		}
 
-		long pendingCount = Core.createXPathQuery(baseQuery + "[(Result = '_1_Running' or Result = empty)]")
-				.setVariable("TestSuite", testSuiteObjectId).execute(context).size();
-
-		if (pendingCount > 0)
-			return;
-
-		testSuite.setResult(UnitTestResult._3_Success);
-		testSuite.setTestFailedCount(0L);
-		testSuite.commit();
-		LOG.trace("Reset test suite failed count and update result to 'Success'");
+		if (commit) testSuite.commit();
 	}
 
 	private void commitSilent(UnitTest test) {
@@ -425,26 +485,33 @@ public class TestManager {
 		}
 	}
 
-	UnitTest getUnitTest(IContext context, TestSuite testSuite, Description description, boolean isMF) {
-		return getUnitTest(context, testSuite, description.getClassName() + "/" + description.getMethodName(), isMF);
+	UnitTest getJUnitTest(IContext context, TestSuite testSuite, Description description) {
+		return getUnitTest(context, testSuite, description.getClassName() + "/" + description.getMethodName(), false);
 	}
 
 	private UnitTest getUnitTest(IContext context, TestSuite testSuite, String name, boolean isMF) {
+		String displayName = name.substring(testSuite.getModule().length() + 1);
+
 		StringBuilder query = new StringBuilder();
 		query.append(String.format("//%s", UnitTest.entityName));
 		query.append(String.format("[%s=$TestSuite]", UnitTest.MemberNames.UnitTest_TestSuite));
 		query.append(String.format("[%s=$Name]", UnitTest.MemberNames.Name));
+		query.append(String.format("[%s=$DisplayName]", UnitTest.MemberNames.DisplayName));
 		query.append(String.format("[%s=$IsMicroflow]", UnitTest.MemberNames.IsMf));
 
 		Optional<IMendixObject> mxObject = Core.createXPathQuery(query.toString())
-				.setVariable("TestSuite", testSuite.getMendixObject().getId()).setVariable("Name", name)
-				.setVariable("IsMicroflow", isMF).execute(context).stream().findAny();
+				.setVariable("TestSuite", testSuite.getMendixObject().getId())
+				.setVariable("Name", name)
+				.setVariable("DisplayName", displayName)
+				.setVariable("IsMicroflow", isMF)
+				.execute(context).stream().findAny();
 
 		if (mxObject.isPresent()) {
 			return UnitTest.initialize(context, mxObject.get());
 		} else {
 			UnitTest newTest = new UnitTest(context);
 			newTest.setName(name);
+			newTest.setDisplayName(displayName);
 			newTest.setUnitTest_TestSuite(testSuite);
 			newTest.setIsMf(isMF);
 
@@ -452,84 +519,14 @@ public class TestManager {
 		}
 	}
 
-	/**
-	 *
-	 *
-	 * Find runabble classes
-	 *
-	 * https://github.com/ddopson/java-class-enumerator/blob/master/src/pro/ddopson/ClassEnumerator.java
-	 *
-	 */
-
-	private static Class<?> loadClass(String className) {
-		try {
-			return TestManager.instance().getClass().getClassLoader().loadClass(className);
-		} catch (ClassNotFoundException e) {
-			throw new RuntimeException("Unexpected ClassNotFoundException loading class '" + className + "'");
-		}
-	}
-
-	private static void processProjectJar(File projectJar, String pkgname, ArrayList<Class<?>> classes)
-			throws IOException {
-		// Get the list of the files contained in the package
-
-		ZipFile zipFile = new ZipFile(projectJar);
-		Enumeration<? extends ZipEntry> entries = zipFile.entries();
-		while (entries.hasMoreElements()) {
-			ZipEntry zipEntry = entries.nextElement();
-			String fileName = zipEntry.getName();
-
-			String className = null;
-
-			if (fileName.startsWith(pkgname.concat("/")) && fileName.endsWith(".class")) {
-				fileName = fileName.replace("/", ".");
-				// removes the .class extension
-				className = fileName.substring(0, fileName.length() - 6);
-			}
-			if (className != null) {
-				Class<?> clazz = loadClass(className);
-				if (isProperUnitTest(clazz))
-					classes.add(clazz);
-			}
-		}
-		zipFile.close();
-	}
-
-	private static boolean isProperUnitTest(Class<?> clazz) {
-		for (Method m : clazz.getMethods())
-			if (m.getAnnotation(org.junit.Test.class) != null)
-				return true;
-
-		return false;
-
-	}
-
-	public static ArrayList<Class<?>> getClassesForPackage(String path /* Package pkg */)
-			throws ZipException, IOException {
-		ArrayList<Class<?>> classes = new ArrayList<Class<?>>();
-
-		// String pkgname = pkg.getName();
-		// String relPath = pkgname.replace('.', '/');
-
-		// Lowercased Mendix Module names equals their package names
-		String pkgname = path.toLowerCase();
-
-		// Get a File object containing the classes. This file is expected to be located
-		// at [deploymentdir]/model/bundles/project.jar
-		File projectjar = new File(Core.getConfiguration().getBasePath() + File.separator + "model" + File.separator
-				+ "bundles" + File.separator + "project.jar");
-
-		processProjectJar(projectjar, pkgname, classes);
-
-		return classes;
-	}
-
-	public void reportStep(String lastStep1) {
-		lastStep = lastStep1;
-		LOG.debug("UnitTest reportStep: '" + lastStep1 + "'");
+	public void reportStep(String message) {
+		LOG.debug("Report step: " + message);
+		lastStep = message;
 	}
 
 	public synchronized void findAllTests(IContext context) throws CoreException {
+		if (!ConfigurationManager.verifyModuleIsEnabled()) return;
+
 		/*
 		 * Find modules
 		 */
@@ -549,9 +546,14 @@ public class TestManager {
 		 * Remove all modules without tests
 		 */
 		deleteTestSuitesWithoutTest(context);
+
+		/*
+		 * Reset refresh required flag
+		 */
+		ModelUpdateSubscriber.getInstance().setRefreshRequired(false);
 	}
 
-	private synchronized TestSuite findOrCreateTestSuite(IContext context, String module) throws CoreException {
+	public synchronized Optional<TestSuite> findTestSuite(IContext context, String module) {
 		StringBuilder query = new StringBuilder();
 		query.append(String.format("//%s", TestSuite.entityName));
 		query.append(String.format("[%s=$Module]", TestSuite.MemberNames.Module));
@@ -559,8 +561,14 @@ public class TestManager {
 		Optional<IMendixObject> mxObject = Core.createXPathQuery(query.toString()).setVariable("Module", module)
 				.execute(context).stream().findAny();
 
-		if (mxObject.isPresent()) {
-			return TestSuite.initialize(context, mxObject.get());
+        return mxObject.map(obj -> TestSuite.initialize(context, obj));
+	}
+
+	private synchronized TestSuite findOrCreateTestSuite(IContext context, String module) throws CoreException {
+		Optional<TestSuite> testSuite = findTestSuite(context, module);
+
+		if (testSuite.isPresent()) {
+			return testSuite.get();
 		} else {
 			TestSuite newSuite = new TestSuite(context);
 			newSuite.setModule(module);
@@ -575,7 +583,7 @@ public class TestManager {
 		query.append(String.format("//%s", TestSuite.entityName));
 		query.append("[not(" + UnitTest.MemberNames.UnitTest_TestSuite + "/" + UnitTest.entityName + ")]");
 
-		List<IMendixObject> testSuites = Core.retrieveXPathQuery(context, query.toString());
+		List<IMendixObject> testSuites = Core.createXPathQuery(query.toString()).execute(context);
 		Core.delete(context, testSuites);
 	}
 
@@ -611,7 +619,7 @@ public class TestManager {
 				/*
 				 * Find Junit tests
 				 */
-				for (String jtest : findJUnitTests(testSuite)) {
+				for (String jtest : JavaTestDiscovery.findJUnitTests(testSuite)) {
 					UnitTest test = getUnitTest(context, testSuite, jtest, false);
 					test.set_dirty(false);
 					test.setUnitTest_TestSuite(testSuite);
@@ -626,59 +634,24 @@ public class TestManager {
 			deleteQuery.append(String.format("//%s", UnitTest.entityName));
 			deleteQuery.append(String.format("[%s=true]", UnitTest.MemberNames._dirty));
 
-			List<IMendixObject> dirtyTests = Core.retrieveXPathQuery(context, deleteQuery.toString());
+			List<IMendixObject> dirtyTests = Core.createXPathQuery(deleteQuery.toString()).execute(context);
 			Core.delete(context, dirtyTests);
 
 			/*
-			 * Update count
+			 * Update counters + result
 			 */
-			StringBuilder countQuery = new StringBuilder();
-			countQuery.append(String.format("//%s", UnitTest.entityName));
-			countQuery.append(String.format("[%s=" + testSuite.getMendixObject().getId().toLong() + "]",
-					UnitTest.MemberNames.UnitTest_TestSuite));
-			Long testCount = Core.retrieveXPathQueryAggregate(context, "count(" + countQuery.toString() + ")");
+			updateTestSuiteCountersAndResult(context, testSuite, false);
 
-			testSuite.setTestCount(testCount);
+			/*
+			 * Update setup/teardown
+			 */
+			testSuite.setHasSetup(hasMfSetup(testSuite));
+			testSuite.setHasTearDown(hasMfTearDown(testSuite));
 			testSuite.commit();
 
 		} catch (Exception e) {
 			LOG.error("Failed to update unit test list: " + e.getMessage(), e);
 		}
-
-	}
-
-	public List<String> findJUnitTests(TestSuite testSuite) {
-		List<String> junitTests = new ArrayList<String>();
-		try {
-			Class<?>[] clazzez = getUnitTestClasses(testSuite);
-
-			if (clazzez != null && clazzez.length > 0) {
-				for (Class<?> clazz : clazzez) {
-
-					// From
-					// https://github.com/KentBeck/junit/blob/master/src/main/java/org/junit/runners/BlockJUnit4ClassRunner.java
-					// method computeTestMethods
-					try {
-						List<FrameworkMethod> methods = new JUnit4(clazz).getTestClass()
-								.getAnnotatedMethods(Test.class);
-
-						if (methods != null && !methods.isEmpty())
-							for (FrameworkMethod method : methods)
-								junitTests.add(clazz.getName() + "/" + method.getName());
-					} catch (InitializationError e2) {
-						StringBuilder errors = new StringBuilder();
-
-						for (Throwable cause : e2.getCauses())
-							errors.append("\n").append(cause.getMessage());
-
-						LOG.error("Failed to recognize class '" + clazz + "' as unitTestClass: " + errors.toString());
-					}
-				}
-			}
-		} catch (Exception e) {
-			LOG.error(CLOUD_SECURITY_ERROR + e.getMessage(), e);
-		}
-		return junitTests;
 	}
 
 	public String getLastReportedStep() {
