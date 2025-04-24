@@ -6,7 +6,6 @@ public class UserActionsRegistrar
 {
   public void registerActions(IActionRegistrator registrator)
   {
-    registrator.bundleComponentLoaded();
     registrator.registerUserAction(feedbackmodule.actions.ValidateEmail.class);
     registrator.registerUserAction(feedbackmodule.actions.XSS_Sanitizer.class);
     registrator.registerUserAction(system.actions.VerifyPassword.class);

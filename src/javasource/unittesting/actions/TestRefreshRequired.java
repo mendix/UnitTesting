@@ -10,10 +10,10 @@
 package unittesting.actions;
 
 import com.mendix.systemwideinterfaces.core.IContext;
-import com.mendix.webui.CustomJavaAction;
 import unittesting.ModelUpdateSubscriber;
+import com.mendix.systemwideinterfaces.core.UserAction;
 
-public class TestRefreshRequired extends CustomJavaAction<java.lang.Boolean>
+public class TestRefreshRequired extends UserAction<java.lang.Boolean>
 {
 	public TestRefreshRequired(IContext context)
 	{

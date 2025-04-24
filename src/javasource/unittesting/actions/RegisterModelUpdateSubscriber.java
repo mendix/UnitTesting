@@ -12,12 +12,11 @@ package unittesting.actions;
 import com.mendix.core.Core;
 import com.mendix.logging.ILogNode;
 import com.mendix.systemwideinterfaces.core.IContext;
-import com.mendix.webui.CustomJavaAction;
 import unittesting.ConfigurationManager;
 import unittesting.ModelUpdateSubscriber;
-import unittesting.TestManager;
+import com.mendix.systemwideinterfaces.core.UserAction;
 
-public class RegisterModelUpdateSubscriber extends CustomJavaAction<java.lang.Boolean>
+public class RegisterModelUpdateSubscriber extends UserAction<java.lang.Boolean>
 {
 	public RegisterModelUpdateSubscriber(IContext context)
 	{
