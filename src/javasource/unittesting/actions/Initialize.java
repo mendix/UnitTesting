@@ -10,10 +10,10 @@
 package unittesting.actions;
 
 import com.mendix.systemwideinterfaces.core.IContext;
-import com.mendix.webui.CustomJavaAction;
 import unittesting.ConfigurationManager;
+import com.mendix.systemwideinterfaces.core.UserAction;
 
-public class Initialize extends CustomJavaAction<java.lang.Void>
+public class Initialize extends UserAction<java.lang.Void>
 {
 	public Initialize(IContext context)
 	{

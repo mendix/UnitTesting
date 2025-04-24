@@ -10,10 +10,10 @@
 package unittesting.actions;
 
 import com.mendix.systemwideinterfaces.core.IContext;
-import com.mendix.webui.CustomJavaAction;
 import unittesting.ConfigurationManager;
+import com.mendix.systemwideinterfaces.core.UserAction;
 
-public class IsEnabled extends CustomJavaAction<java.lang.Boolean>
+public class IsEnabled extends UserAction<java.lang.Boolean>
 {
 	public IsEnabled(IContext context)
 	{

@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [10.0.0] - 2025-04-24
+
+### Added:
+- We upgraded the module to Mendix version 10.21.0 for compatibility with Mendix 11
+- We updated Atlas Core compatibility to version 3.17.0
+- We updated Atlas Web Content compatibility to version 3.8.0
+- We updated Data Widgets compatibility to version 2.31.0
+
 ## [9.6.0] - 2025-03-20
 
 ### Added:

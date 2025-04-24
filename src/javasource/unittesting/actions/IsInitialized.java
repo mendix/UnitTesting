@@ -10,10 +10,10 @@
 package unittesting.actions;
 
 import com.mendix.systemwideinterfaces.core.IContext;
-import com.mendix.webui.CustomJavaAction;
 import unittesting.ConfigurationManager;
+import com.mendix.systemwideinterfaces.core.UserAction;
 
-public class IsInitialized extends CustomJavaAction<java.lang.Boolean>
+public class IsInitialized extends UserAction<java.lang.Boolean>
 {
 	public IsInitialized(IContext context)
 	{

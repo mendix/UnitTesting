@@ -12,21 +12,25 @@ package system.actions;
 import com.mendix.core.Core;
 import com.mendix.systemwideinterfaces.core.IUser;
 import com.mendix.systemwideinterfaces.core.IContext;
-import com.mendix.webui.CustomJavaAction;
+import com.mendix.systemwideinterfaces.core.UserAction;
 
 /**
  * Verifies that the specified user name/password combination is valid.
  */
-public class VerifyPassword extends CustomJavaAction<java.lang.Boolean>
+public class VerifyPassword extends UserAction<java.lang.Boolean>
 {
-	private java.lang.String userName;
-	private java.lang.String password;
+	private final java.lang.String userName;
+	private final java.lang.String password;
 
-	public VerifyPassword(IContext context, java.lang.String userName, java.lang.String password)
+	public VerifyPassword(
+		IContext context,
+		java.lang.String _userName,
+		java.lang.String _password
+	)
 	{
 		super(context);
-		this.userName = userName;
-		this.password = password;
+		this.userName = _userName;
+		this.password = _password;
 	}
 
 	@java.lang.Override
