@@ -11,6 +11,7 @@ import com.mendix.logging.ILogNode;
 import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.systemwideinterfaces.core.IMendixObject;
 
+import unittesting.activities.AssertActivity;
 import unittesting.activities.StartEndExecutionActivity;
 import unittesting.activities.StepExecutionActivity;
 import unittesting.activities.ExceptionExecutionActivity;
@@ -18,9 +19,10 @@ import unittesting.activities.ExceptionExecutionActivity;
 import unittesting.proxies.*;
 
 public class TestExecutionContext {
-    private final UnitTestContext unitTestContext;
+    private final ArrayList<AssertActivity> assertions = new ArrayList<>();
     private final ArrayList<StepExecutionActivity> steps = new ArrayList<>();
 
+    private UnitTestContext unitTestContext;
     private StartEndExecutionActivity startActivity;
     private StartEndExecutionActivity endActivity;
     private ExceptionExecutionActivity exceptionActivity;
@@ -28,24 +30,12 @@ public class TestExecutionContext {
 
     private static final ILogNode LOG = ConfigurationManager.LOG;
 
-    public TestExecutionContext(IContext context, String mf) {
-        UnitTestContext testContext = new UnitTestContext(context);
-        testContext.setTestName(mf);
-
-        LOG.trace("Created unit test context for " + mf);
-        this.unitTestContext = testContext;
+    public void setUnitTestContext(UnitTestContext unitTestContext) {
+        this.unitTestContext = unitTestContext;
     }
 
     public UnitTestContext getUnitTestContext() {
         return this.unitTestContext;
-    }
-
-    public void delete() {
-        if (this.unitTestContext == null)
-            return;
-
-        this.unitTestContext.delete();
-        LOG.trace("Deleted unit test context");
     }
 
     public void collectStart(boolean result, String message) {
@@ -60,17 +50,9 @@ public class TestExecutionContext {
     	this.exceptionActivity = new ExceptionExecutionActivity(getNextSequence(), exception);
     }
 
-    public Assertion collectAssertion(IContext context, String name, boolean result, String failureMessage) {
-        ENUM_UnitTestResult testResult = result ? ENUM_UnitTestResult._3_Success : ENUM_UnitTestResult._2_Failed;
-
-        Assertion assertion = new Assertion(context);
-        assertion.setAssertion_UnitTestContext(this.unitTestContext);
-        assertion.setSequence(getNextSequence());
-        assertion.setName(name);
-        assertion.setResult(testResult);
-
-        if (testResult.equals(ENUM_UnitTestResult._2_Failed))
-            assertion.setMessage(failureMessage);
+    public AssertActivity collectAssertion(String name, boolean result, String failureMessage) {
+        AssertActivity assertion = new AssertActivity(getNextSequence(), name, result, failureMessage);
+        this.assertions.add(assertion);
 
         return assertion;
     }
@@ -84,24 +66,17 @@ public class TestExecutionContext {
         return !this.steps.isEmpty() ? this.steps.get(this.steps.size() - 1) : null;
     }
 
-    public boolean hasFailedAssertion(IContext context) {
-        List<IMendixObject> assertionList = Core.retrieveByPath(context, this.unitTestContext.getMendixObject(),
-                Assertion.MemberNames.Assertion_UnitTestContext.toString());
-
-        return assertionList.stream().anyMatch(obj -> isFailedAssertion(context, obj));
+    public boolean hasFailedAssertion() {
+        return this.assertions.stream().anyMatch(AssertActivity::isFailed);
     }
 
-    private boolean isFailedAssertion(IContext context, IMendixObject object) {
-        return ENUM_UnitTestResult._2_Failed.equals(Assertion.initialize(context, object).getResult());
-    }
-
-    public ArrayList<String> getFailureReasons(IContext context) {
+    public ArrayList<String> getFailureReasons() {
         ArrayList<String> failures = new ArrayList<>();
 
         if (this.startActivity != null && !this.startActivity.getResult())
             failures.add("Failed to start test");
 
-        if (this.hasFailedAssertion(context))
+        if (this.hasFailedAssertion())
             failures.add("One or more assertions failed");
 
         if (this.endActivity != null && !this.endActivity.getResult())
@@ -113,8 +88,8 @@ public class TestExecutionContext {
         return failures;
     }
 
-    public String getResultSummary(IContext context) {
-        ArrayList<String> failureReasons = this.getFailureReasons(context);
+    public String getResultSummary() {
+        ArrayList<String> failureReasons = this.getFailureReasons();
 
         if (failureReasons.isEmpty()) {
             return "Microflow completed successfully";
@@ -130,49 +105,51 @@ public class TestExecutionContext {
         }
     }
 
-    public void persistTestActivities(IContext context, UnitTest test) {
-        List<IMendixObject> activities = this.createTestActivities(context, test);
-        Core.commit(Core.createSystemContext(), activities);
+    public void persistTestActivities(UnitTest test) {
+        IContext systemContext = Core.createSystemContext();
+        systemContext.startTransaction();
+
+        List<IMendixObject> activities = this.createTestActivities(systemContext, test);
+        Core.commit(systemContext, activities);
+
+        systemContext.endTransaction();
     }
 
     public List<IMendixObject> createTestActivities(IContext context, UnitTest test) {
         List<IMendixObject> activities = new ArrayList<>();
 
         if (this.startActivity != null)
-            activities.add(createStartActivity(test));
+            activities.add(createStartActivity(context, test));
 
         activities.addAll(createAssertionActivities(context, test));
-        activities.addAll(createStepActivities(test));
+        activities.addAll(createStepActivities(context, test));
 
         if (this.endActivity != null)
-            activities.add(createEndActivity(test));
+            activities.add(createEndActivity(context, test));
 
         if (this.exceptionActivity != null)
-            activities.add(createExceptionActivity(test));
+            activities.add(createExceptionActivity(context, test));
 
         return activities;
     }
 
     private List<IMendixObject> createAssertionActivities(IContext context, UnitTest test) {
-        List<IMendixObject> assertionList = Core.retrieveByPath(context, this.unitTestContext.getMendixObject(),
-                Assertion.MemberNames.Assertion_UnitTestContext.toString());
-
-        return assertionList.stream()
-                .map(assertion -> createAssertionActivity(test, assertion))
+        return this.assertions.stream()
+                .map(assertion -> createAssertionActivity(context, test, assertion))
                 .collect(Collectors.toList());
     }
 
-    private List<IMendixObject> createStepActivities(UnitTest test) {
+    private List<IMendixObject> createStepActivities(IContext context, UnitTest test) {
         return this.steps.stream()
-                .map(step -> createStepActivity(test, step))
+                .map(step -> createStepActivity(context, test, step))
                 .collect(Collectors.toList());
     }
 
-    private IMendixObject createStartActivity(UnitTest test) {
+    private IMendixObject createStartActivity(IContext context, UnitTest test) {
         if (this.startActivity == null)
             throw new IllegalStateException("No start activity collected");
 
-        StartActivity startActivity = new StartActivity(Core.createSystemContext());
+        StartActivity startActivity = new StartActivity(context);
         startActivity.setTestActivity_UnitTest(test);
         startActivity.setSequence(this.startActivity.getSequence());
         startActivity.setResult(this.startActivity.getResultEnum());
@@ -181,11 +158,11 @@ public class TestExecutionContext {
         return startActivity.getMendixObject();
     }
 
-    private IMendixObject createEndActivity(UnitTest test) {
+    private IMendixObject createEndActivity(IContext context, UnitTest test) {
         if (this.endActivity == null)
             throw new IllegalStateException("No end activity collected");
 
-        EndActivity endActivity = new EndActivity(Core.createSystemContext());
+        EndActivity endActivity = new EndActivity(context);
         endActivity.setTestActivity_UnitTest(test);
         endActivity.setSequence(this.endActivity.getSequence());
         endActivity.setResult(this.endActivity.getResultEnum());
@@ -194,14 +171,14 @@ public class TestExecutionContext {
         return endActivity.getMendixObject();
     }
 
-    private IMendixObject createExceptionActivity(UnitTest test) {
+    private IMendixObject createExceptionActivity(IContext context, UnitTest test) {
     	if (this.exceptionActivity == null)
     		throw new IllegalStateException("No exception collected");
 
         Exception exception = this.exceptionActivity.getException();
 		Throwable cause = ExceptionUtils.getRootCause(exception);
 
-        ExceptionActivity exceptionActivity = new ExceptionActivity(Core.createSystemContext());
+        ExceptionActivity exceptionActivity = new ExceptionActivity(context);
         exceptionActivity.setTestActivity_UnitTest(test);
         exceptionActivity.setSequence(this.exceptionActivity.getSequence());
         exceptionActivity.setMessage(cause.getMessage());
@@ -210,22 +187,19 @@ public class TestExecutionContext {
         return exceptionActivity.getMendixObject();
     }
 
-    private IMendixObject createAssertionActivity(UnitTest test, IMendixObject assertionObj) {
-        IContext systemContext = Core.createSystemContext();
-        Assertion assertion = Assertion.initialize(systemContext, assertionObj);
-
-        AssertionActivity assertionActivity = new AssertionActivity(systemContext);
+    private IMendixObject createAssertionActivity(IContext context, UnitTest test, AssertActivity assertion) {
+        AssertionActivity assertionActivity = new AssertionActivity(context);
         assertionActivity.setTestActivity_UnitTest(test);
         assertionActivity.setSequence(assertion.getSequence());
         assertionActivity.setName(assertion.getName());
-        assertionActivity.setResult(assertion.getResult());
+        assertionActivity.setResult(assertion.getResultEnum());
         assertionActivity.setMessage(assertion.getMessage());
 
         return assertionActivity.getMendixObject();
     }
 
-    private IMendixObject createStepActivity(UnitTest test, StepExecutionActivity step) {
-        StepActivity stepActivity = new StepActivity(Core.createSystemContext());
+    private IMendixObject createStepActivity(IContext context, UnitTest test, StepExecutionActivity step) {
+        StepActivity stepActivity = new StepActivity(context);
         stepActivity.setTestActivity_UnitTest(test);
         stepActivity.setSequence(step.getSequence());
         stepActivity.setMessage(step.getMessage());
