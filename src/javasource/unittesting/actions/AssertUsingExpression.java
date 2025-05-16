@@ -13,9 +13,12 @@ import com.mendix.systemwideinterfaces.core.IContext;
 import com.mendix.systemwideinterfaces.core.IMendixObject;
 import unittesting.TestExecutionContext;
 import unittesting.TestManager;
+import unittesting.UnitTestContextManager;
+import unittesting.activities.AssertActivity;
 import unittesting.proxies.Assertion;
 import unittesting.proxies.ENUM_UnitTestResult;
 import com.mendix.systemwideinterfaces.core.UserAction;
+import unittesting.proxies.UnitTestContext;
 
 public class AssertUsingExpression extends UserAction<IMendixObject>
 {
@@ -44,12 +47,15 @@ public class AssertUsingExpression extends UserAction<IMendixObject>
 	{
 		// BEGIN USER CODE
 		TestExecutionContext executionContext = TestManager.instance().executionContext();
-		Assertion result = executionContext.collectAssertion(getContext(), name, expression, failureMessage);
+		AssertActivity assertActivity = executionContext.collectAssertion(name, expression, failureMessage);
 
-		if (ENUM_UnitTestResult._2_Failed.equals(result.getResult()) && stopOnFailure)
+		UnitTestContext unitTestContext = executionContext.getUnitTestContext();
+		Assertion assertion = UnitTestContextManager.addAssertion(getContext(), unitTestContext, assertActivity);
+
+		if (assertActivity.isFailed() && stopOnFailure)
 			throw new TestManager.AssertionException(failureMessage);
 
-		return result.getMendixObject();
+		return assertion.getMendixObject();
 		// END USER CODE
 	}
 

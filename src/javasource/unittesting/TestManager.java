@@ -24,6 +24,7 @@ import com.mendix.systemwideinterfaces.core.IMendixObject;
 import unittesting.proxies.ENUM_UnitTestResult;
 import unittesting.proxies.TestSuite;
 import unittesting.proxies.UnitTest;
+import unittesting.proxies.UnitTestContext;
 
 /**
  * @author mwe
@@ -112,16 +113,13 @@ public class TestManager {
 		if (hasMfSetup(testSuite)) {
 			try {
 				LOG.info("Running Setup microflow..");
-				if (testSuite.getAutoRollbackMFs()) {
-					setupContext = Core.createSystemContext();
-					setupContext.startTransaction();
-					LOG.trace("Start transaction for setup");
-					Core.microflowCall(testSuite.getModule() + ".Setup").execute(setupContext);
-				} else {
-					Core.microflowCall(testSuite.getModule() + ".Setup").execute(Core.createSystemContext());
-				}
+
+				setupContext = Core.createSystemContext();
+				setupContext.startTransaction();
+				LOG.trace("Start transaction for setup");
+				Core.microflowCall(testSuite.getModule() + ".Setup").execute(setupContext);
 			} catch (Exception e) {
-				LOG.error("Exception during SetUp microflow: " + e.getMessage(), e);
+				LOG.error("Exception during Setup microflow: " + e.getMessage(), e);
 				throw new RuntimeException(e);
 			}
 		}
@@ -129,16 +127,15 @@ public class TestManager {
 
 	private void runMfTearDown(TestSuite testSuite) {
 		IContext tearDownContext = setupContext;
+
 		if (hasMfTearDown(testSuite)) {
 			try {
 				LOG.info("Running TearDown microflow..");
+
 				if (tearDownContext == null) {
 					tearDownContext = Core.createSystemContext();
-
-					if (testSuite.getAutoRollbackMFs()) {
-						tearDownContext.startTransaction();
-						LOG.trace("Start transaction for teardown");
-					}
+					tearDownContext.startTransaction();
+					LOG.trace("Start transaction for teardown");
 				}
 
 				Core.microflowCall(testSuite.getModule() + ".TearDown").execute(tearDownContext);
@@ -150,9 +147,14 @@ public class TestManager {
 		}
 
 		// Rollback teardown and/or setup transaction
-		if (testSuite.getAutoRollbackMFs() && tearDownContext != null) {
-			LOG.trace("Rollback transaction for setup and/or teardown");
-			tearDownContext.rollbackTransaction();
+		if (tearDownContext != null && tearDownContext.isInTransaction()) {
+			if (testSuite.getAutoRollbackMFs()) {
+				LOG.trace("Rollback transaction for setup and/or teardown");
+				tearDownContext.rollbackTransaction();
+			} else {
+				LOG.trace("End transaction for for setup and/or teardown");
+				tearDownContext.endTransaction();
+			}
 		}
 
 		// Make sure we clean setupContext after running this test/suite
@@ -322,11 +324,11 @@ public class TestManager {
 		return true;
 	}
 
-	private MicroflowCallBuilder buildMicroflowCall(String mf) {
+	private MicroflowCallBuilder buildMicroflowCall(String mf, UnitTestContext unitTestContext) {
 		MicroflowCallBuilder builder = Core.microflowCall(mf);
 
 		if (hasTestContextInputParameter(mf))
-			builder = builder.withParam(TEST_CONTEXT_PARAM_NAME, executionContext().getUnitTestContext().getMendixObject());
+			builder = builder.withParam(TEST_CONTEXT_PARAM_NAME, unitTestContext.getMendixObject());
 
 		return builder;
 	}
@@ -350,21 +352,12 @@ public class TestManager {
 		test.setResultMessage("");
 		test.setLastRun(new Date());
 
-		IContext mfContext = null;
+		IContext mfContext = getMicroflowTestContext(testSuite);
 
-		if (testSuite.getAutoRollbackMFs()) {
-			if (Core.getMicroflowNames().contains(testSuite.getModule() + ".Setup"))
-				mfContext = setupContext.createClone();
-			else
-				mfContext = Core.createSystemContext();
+		mfContext.startTransaction();
+		LOG.trace("Start transaction for unit test");
 
-			mfContext.startTransaction();
-			LOG.trace("Start transaction for unit test");
-		} else {
-			mfContext = Core.createSystemContext();
-		}
-
-		executionContext = new TestExecutionContext(mfContext, mf);
+		executionContext = new TestExecutionContext();
 		executionContext().clearTestActivities(test);
 
 		long duration = 0L;
@@ -383,7 +376,10 @@ public class TestManager {
 			test.setResult(ENUM_UnitTestResult._1_Running);
 			commitSilent(test);
 
-			Object mfReturnValue = buildMicroflowCall(mf).execute(mfContext);
+			UnitTestContext unitTestContext = UnitTestContextManager.createUnitTestContext(mfContext, mf);
+			executionContext().setUnitTestContext(unitTestContext);
+
+			Object mfReturnValue = buildMicroflowCall(mf, unitTestContext).execute(mfContext);
 			duration = System.currentTimeMillis() - startTimestamp;
 
 			boolean returnValueResult = mfReturnValue == null || Boolean.TRUE.equals(mfReturnValue) || "".equals(mfReturnValue);
@@ -396,8 +392,18 @@ public class TestManager {
 				executionContext().collectEnd(false, "Microflow returned false");
 			}
 
-			boolean testResult = returnValueResult && !executionContext().hasFailedAssertion(mfContext);
+			boolean testResult = returnValueResult && !executionContext().hasFailedAssertion();
 			test.setResult(testResult ? ENUM_UnitTestResult._3_Success : ENUM_UnitTestResult._2_Failed);
+
+			if (mfContext.isInTransaction()) {
+				if (testSuite.getAutoRollbackMFs()) {
+					LOG.trace("Rollback transaction for unit test");
+					mfContext.rollbackTransaction();
+				} else {
+					LOG.trace("End transaction for unit test");
+					mfContext.endTransaction();
+				}
+			}
 
 			return testResult;
 		} catch (Exception e) {
@@ -412,23 +418,24 @@ public class TestManager {
 
 			return false;
 		} finally {
-			executionContext().persistTestActivities(mfContext, test);
+			executionContext().persistTestActivities(test);
 
-			if (testSuite.getAutoRollbackMFs() && mfContext.isInTransaction()) {
-				LOG.trace("Rollback transaction for unit test");
-				mfContext.rollbackTransaction();
-			}
-
-			test.setResultMessage(executionContext().getResultSummary(mfContext));
+			test.setResultMessage(executionContext().getResultSummary());
 			test.setReadableTime(formatAsReadableTime(duration));
 			if (executionContext().getLastStep() != null)
 				test.setLastStep(executionContext().getLastStep().getMessage());
 
 			commitSilent(test);
 
-			executionContext().delete();
-
 			LOG.info("Finished unit test " + mf + ": " + test.getResult());
+		}
+	}
+
+	private IContext getMicroflowTestContext(TestSuite testSuite) {
+		if (Core.getMicroflowNames().contains(testSuite.getModule() + ".Setup")) {
+			return setupContext.createClone();
+		} else {
+			return Core.createSystemContext();
 		}
 	}
 
