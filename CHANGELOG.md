@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [9.6.1] - 2025-05-16
+
+### Fixed:
+- We fixed an issue that caused unit test microflows with auto-committed objects to fail with an unhandled exception (#244962, #246277, #246384).
+- We fixed reporting issue for ThrowAssetionFailed action. Now a failed unnamed assertion step will be reported.
+
 ## [9.6.0] - 2025-03-20
 
 ### Added:
