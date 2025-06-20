@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [10.0.2] - 2025-06-20
 
 ### Added:
--  We included the OSS clearance report and license file in the module package.
+- We included the OSS clearance report and license file in the module package.
 
 ## [10.0.1] - 2025-05-16
 
