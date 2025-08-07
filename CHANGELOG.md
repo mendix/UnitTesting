@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [10.0.3] - 2025-08-07
+
+### Added:
+- We updated the commons-lang3 dependency to 3.18.0
+
 ## [10.0.2] - 2025-06-20
 
 ### Added:
