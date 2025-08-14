@@ -462,7 +462,7 @@ public class TestManager {
 		long pendingCount = getTestSuiteCount(context, testSuite, "[Result = '_1_Running' or Result = empty]");
 
 		testSuite.setTestCount(testCount);
-		LOG.trace("Updated test count to " + succeededCount);
+		LOG.trace("Updated test count to " + testCount);
 
 		testSuite.setTestPassedCount(succeededCount);
 		LOG.trace("Updated test suite succeeded count to " + succeededCount);
@@ -550,6 +550,11 @@ public class TestManager {
 		}
 
 		/*
+		 * Remove unit tests from orphaned modules
+		 */
+		deleteUnitTestsFromOrphanedModules(context, modules);
+
+		/*
 		 * Remove all modules without tests
 		 */
 		deleteTestSuitesWithoutTest(context);
@@ -585,13 +590,34 @@ public class TestManager {
 		}
 	}
 
-	private synchronized void deleteTestSuitesWithoutTest(IContext context) throws CoreException {
+	private synchronized void deleteTestSuitesWithoutTest(IContext context) {
 		StringBuilder query = new StringBuilder();
 		query.append(String.format("//%s", TestSuite.entityName));
 		query.append("[not(" + UnitTest.MemberNames.UnitTest_TestSuite + "/" + UnitTest.entityName + ")]");
 
 		List<IMendixObject> testSuites = Core.createXPathQuery(query.toString()).execute(context);
 		Core.delete(context, testSuites);
+	}
+
+	private synchronized void deleteUnitTestsFromOrphanedModules(IContext context, Set<String> currentModules) {
+		List<IMendixObject> allTestSuites = Core.createXPathQuery("//" + TestSuite.entityName).execute(context);
+		
+		for (IMendixObject mxObject : allTestSuites) {
+			TestSuite testSuite = TestSuite.initialize(context, mxObject);
+			
+			if (!currentModules.contains(testSuite.getModule())) {
+				StringBuilder query = new StringBuilder();
+				query.append(String.format("//%s", UnitTest.entityName));
+				query.append(String.format("[%s=$TestSuite]", UnitTest.MemberNames.UnitTest_TestSuite));
+				
+				List<IMendixObject> orphanedUnitTests = Core.createXPathQuery(query.toString())
+						.setVariable("TestSuite", testSuite.getMendixObject().getId().toLong()).execute(context);
+
+				if (!orphanedUnitTests.isEmpty()) {
+					Core.delete(context, orphanedUnitTests);
+				}
+			}
+		}
 	}
 
 	public synchronized void updateUnitTestList(IContext context, TestSuite testSuite) {

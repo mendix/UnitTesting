@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [9.6.3] - 2025-08-14
+
+### Added:
+- We fixed an issue where renaming or deleting a module resulted in the test suite overview showing incorrect data.
+
 ## [9.6.2] - 2025-08-07
 
 ### Added:
