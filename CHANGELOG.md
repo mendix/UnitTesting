@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [10.0.5] - 2025-10-13
+
+### Fixed:
+- We increased the length of the ‘Name’ and ‘DisplayName’ attributes in the UnitTest entity, the ‘Module’ attribute in the TestSuite entity, and the ‘TestName’ attribute in the UnitTestContext entity to align with the maximum allowed lengths for module and microflow names in the platform. (#259822)
+
 ## [10.0.4] - 2025-08-14
 
 ### Added:
