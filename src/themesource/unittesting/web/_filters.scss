@@ -7,43 +7,46 @@ $filter-breakpoint: 1650px !default;
 .btn.mx-unit-test-filter-button:active,
 .btn.mx-unit-test-filter-button:focus {
     background-color: transparent;
-    color: $font-color-default;
-    padding: $spacing-smaller $spacing-small;
+    color: var(--font-color-default);
+    padding: var(--spacing-smaller) var(--spacing-small);
 
     &.mx-unit-test-filter-button-default {
         border-color: transparent;
     }
 
     &.mx-unit-test-filter-button-default:hover {
-        border-color: $color-default-dark;
+        border-color: var(--color-default-dark);
     }
 
     &.mx-unit-test-filter-button-active {
         &.btn-danger {
-            background-color: $color-danger-lighter;
+            background-color: var(--color-danger-lighter);
         }
 
         &.btn-success {
-            background-color: $color-success-lighter;
+            background-color: var(--color-success-lighter);
         }
 
         &.btn-default {
-            background-color: $brand-default;
-            border-color: $color-default-dark;
+            background-color: var(--brand-default);
+            border-color: var(--color-default-dark);
         }
     }
 
     &.mx-unit-test-filter-button-active:hover {
         &.btn-danger {
-            background-color: lighten($color-danger-lighter, 5%);
+            background-color: var(--color-danger-lighter);
+            filter: brightness(1.02);
         }
 
         &.btn-success {
-            background-color: lighten($color-success-lighter, 5%)
+            background-color: var(--color-success-lighter);
+            filter: brightness(1.02);
         }
 
         &.btn-default {
-            background-color: lighten($brand-default, 5%);
+            background-color: var(--brand-default);
+            filter: brightness(1.02);
         }
     }
 }

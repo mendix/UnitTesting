@@ -12,7 +12,7 @@
         > .widget-accordion-group-header > .widget-accordion-group-header-button,
         > .widget-accordion-group-header > .widget-accordion-group-header-button.widget-accordion-group-header-button-clickable:hover,
         > .widget-accordion-group-header > .widget-accordion-group-header-button.widget-accordion-group-header-button-clickable:focus {
-            background-color: $color-danger-lighter;
+            background-color: var(--color-danger-lighter);
         }
     }
 }
