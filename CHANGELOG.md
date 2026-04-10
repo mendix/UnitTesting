@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [10.0.6] - 2025-04-10
+
+### Fixed:
+- We migrated from SASS to CSS variables to ensure compatibility with Atlas 4.
+
 ## [10.0.5] - 2025-10-13
 
 ### Fixed:

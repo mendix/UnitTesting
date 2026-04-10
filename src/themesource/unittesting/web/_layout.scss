@@ -9,28 +9,28 @@
     }
 }
 
-@media (max-width: $screen-sm-max) {
+@media (max-width: var(--screen-sm-max)) {
     .mx-unit-test-master-detail {
         > .row > div:first-child {
-            border-bottom: 1px $border-color-default solid;
-            padding-bottom: $spacing-small;
+            border-bottom: 1px var(--border-color-default) solid;
+            padding-bottom: var(--spacing-small);
         }
 
         > .row > div:last-child {
-            padding-top: $spacing-large;
+            padding-top: var(--spacing-large);
         }
     }
 }
 
-@media (min-width: $screen-md) {
+@media (min-width: var(--screen-md)) {
     .mx-unit-test-master-detail {
         > .row > div:first-child {
-            border-right: 1px $border-color-default solid;
-            padding-right: $spacing-large;
+            border-right: 1px var(--border-color-default) solid;
+            padding-right: var(--spacing-large);
         }
 
         > .row > div:last-child {
-            padding-left: $spacing-large;
+            padding-left: var(--spacing-large);
         }
     }
 
@@ -48,7 +48,7 @@
     justify-content: center;
     align-items: center;
     height: 100%;
-    color: $font-color-detail;
+    color: var(--font-color-detail);
 }
 
 .mx-unit-test-listview.mx-listview > ul > li {
@@ -60,9 +60,9 @@
 }
 
 .mx-unit-test-default-container-gap {
-    gap: $spacing-smaller;
+    gap: var(--spacing-smaller);
 }
 
 .mx-unit-test-button-container-gap {
-    gap: $spacing-small;
+    gap: var(--spacing-small);
 }

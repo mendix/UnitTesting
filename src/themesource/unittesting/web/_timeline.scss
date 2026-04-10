@@ -1,20 +1,23 @@
 @import '../../../theme/web/custom-variables';
 
-$timeline-item-height: 80px !default;
-$timeline-item-spacing: 60px !default;
+:root {
+    --unit-test-timeline-item-height: 80px;
+    --unit-test-timeline-item-spacing: 60px;
+}
 
 .mx-unit-test-timeline-item {
-    padding: $spacing-smaller 0 $spacing-smaller $timeline-item-spacing;
-    
+    padding: var(--spacing-smaller) 0 var(--spacing-smaller) var(--unit-test-timeline-item-spacing);
+    position: relative;
+
     &::before {
         content: "";
         display: block;
         position: absolute;
         top: 0;
-        left: calc($timeline-item-spacing / 2); 
+        left: calc(var(--unit-test-timeline-item-spacing) / 2);
         height: 100%;
         width: 0;
-        border-left: 1px $border-color-default solid;
+        border-left: 1px var(--border-color-default) solid;
     }
 }
 
@@ -23,7 +26,7 @@ $timeline-item-spacing: 60px !default;
 }
 
 .mx-unit-test-timeline-listview > ul > li:first-child .mx-unit-test-timeline-item-expandable::before {
-    top: calc($timeline-item-height / 2);
+    top: calc(var(--unit-test-timeline-item-height) / 2);
 }
 
 .mx-unit-test-timeline-listview > ul > li:last-child .mx-unit-test-timeline-item-static::before {
@@ -31,7 +34,7 @@ $timeline-item-spacing: 60px !default;
 }
 
 .mx-unit-test-timeline-listview > ul > li:last-child .mx-unit-test-timeline-item-expandable::before {
-    height: calc($timeline-item-height / 2);
+    height: calc(var(--unit-test-timeline-item-height) / 2);
 }
 
 .mx-unit-test-timeline-listview > ul > li:first-child:last-child .mx-unit-test-timeline-item::before {
@@ -42,9 +45,9 @@ $timeline-item-spacing: 60px !default;
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background-color: $gray-dark;
+    background-color: var(--gray-dark);
     position: absolute;
-    left: calc($timeline-item-spacing / 2 - 3.5px);    
+    left: calc(var(--unit-test-timeline-item-spacing) / 2 - 3.5px);
 }
 
 .mx-unit-test-timeline-item-static .mx-unit-test-timeline-circle {
@@ -52,7 +55,7 @@ $timeline-item-spacing: 60px !default;
 }
 
 .mx-unit-test-timeline-item-expandable .mx-unit-test-timeline-circle {
-    top: calc($timeline-item-height / 2 - 4px + $spacing-smaller);
+    top: calc(var(--unit-test-timeline-item-height) / 2 - 4px + var(--spacing-smaller));
 }
 
 .mx-unit-test-timeline-accordion.widget-accordion {
@@ -61,26 +64,26 @@ $timeline-item-spacing: 60px !default;
     .widget-accordion-group > .widget-accordion-group-header > .widget-accordion-group-header-button {
         background-color: transparent;
         border-radius: 0;
-        min-height: $timeline-item-height;
+        min-height: var(--unit-test-timeline-item-height);
     }
 }
 
 .mx-unit-test-timeline-static-content {
-    padding: $spacing-medium;
-    border: 1px $border-color-default solid;
-    min-height: $timeline-item-height;
+    padding: var(--spacing-medium);
+    border: 1px var(--border-color-default) solid;
+    min-height: var(--unit-test-timeline-item-height);
 }
 
 .mx-unit-test-stacktrace {
     position: relative;
-    padding: $spacing-small;
+    padding: var(--spacing-small);
     padding-right: 30px;
-    border: 1px $border-color-default solid;
+    border: 1px var(--border-color-default) solid;
     border-radius: 2px;
 }
 
 .mx-unit-test-stacktrace-preview {
-    max-height: calc(3 * $font-size-default * $line-height-base);
+    max-height: calc(3 * var(--font-size-default) * var(--line-height-base));
     overflow: hidden;
     display: block;
 }
