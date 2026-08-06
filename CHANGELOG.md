@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [10.0.7] - 2026-08-06
+
+### Added:
+- We updated the httpclient5 dependency to 5.6.2
+
 ## [10.0.6] - 2025-04-10
 
 ### Fixed:
